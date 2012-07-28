@@ -5,19 +5,16 @@ package batch.sql.syntax;
 
 import java.util.List;
 
-import batch.Op;
 import batch.sql.schema.ISchema;
 import batch.util.BatchFactory;
 import batch.util.Forest;
 
 public class Assign extends Action {
 
-	Op op;
 	SQLTranslation target;
 	SQLTranslation source;
 
-	public Assign(Op op, SQLTranslation target, SQLTranslation source) {
-		this.op = op;
+	public Assign(SQLTranslation target, SQLTranslation source) {
 		this.target = target;
 		this.source = source;
 	}
@@ -27,7 +24,7 @@ public class Assign extends Action {
 			SQLTranslation outerCond, Env env, NormType normType) {
 		SQLTranslation targ = target.normalize(schema, query, null, env, normType);
 		SQLTranslation src = source.normalize(schema, query, null, env, normType);
-		Assign newAction = new Assign(op, targ, src);
+		Assign newAction = new Assign(targ, src);
 		targ.getTable().getQuery().doAction(SQLAction.UPDATE, newAction);
 		return this;
 	}
@@ -45,7 +42,7 @@ public class Assign extends Action {
 
 	@Override
 	public <E> E run(BatchFactory<E> f) {
-		return f.Assign(op, target.run(f), source.run(f));
+		return f.Assign(target.run(f), source.run(f));
 	}
 
 	@Override

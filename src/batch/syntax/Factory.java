@@ -13,11 +13,11 @@ import batch.util.BatchFactoryHelper;
 public class Factory extends BatchFactoryHelper<Expression> {
 
 	@Override
-	public Expression Assign(final Op op, final Expression target,
+	public Expression Assign(final Expression target,
 			final Expression source) {
 		return new Expression() {
 			public <E> E run(BatchFactory<E> f) {
-				return f.Assign(op, target.run(f), source.run(f));
+				return f.Assign(target.run(f), source.run(f));
 			}
 		};
 	}

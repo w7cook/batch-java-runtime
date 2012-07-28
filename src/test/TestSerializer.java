@@ -1,7 +1,7 @@
 // Written by William Cook, Ben Wiedermann, Ali Ibrahim
 // The University of Texas at Austin, Department of Computer Science
 // See LICENSE.txt for license information
-package batch.eval;
+package test;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -11,10 +11,7 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.antlr.runtime.RecognitionException;
-import org.junit.Test;
 
 import batch.Op;
 import batch.json.JSONTransport;
@@ -88,20 +85,20 @@ public class TestSerializer {
 		return x;
 	}
 
-	@Test
+	//@Test
 	public void testJSON() throws IOException {
 		// generate expressions JSONTransport<SQLTranslation> trans = new
 		// JSONTransport<SQLTranslation>();
 		test(new JSONTransport());
 	}
 
-	@Test
+	//@Test
 	public void testXML() throws IOException {
 		// generate expressions
 		test(new XMLTransport());
 	}
 
-	@Test
+	//@Test
 	public void testScript() throws RecognitionException {
 		Format formatter = new Format();
 		for (Expression e : generateExpressions()) {
@@ -111,7 +108,9 @@ public class TestSerializer {
 			e2 = BatchScriptParser.parse(script);
 			String script2 = e2.run(formatter);
 			System.out.println("CHK: " + script2);
-			Assert.assertEquals(script, script2);
+	    if (!script.equals(script2)) {
+	      System.out.println("Script Error");
+	    }
 		}
 	}
 
@@ -138,8 +137,17 @@ public class TestSerializer {
 		String x2 = out.toString();
 
 		// the read expressions should equal the original
-		Assert.assertEquals(x, x2);
-		// System.out.println(e1);
+		if (!x.equals(x2)) {
+      System.out.println("Error");
+      System.out.println(x);
+      System.out.println(x2);
+		}
 	}
 
+	public static void main(String[] args) throws RecognitionException, IOException {
+	  TestSerializer t = new TestSerializer();
+    t.testScript();
+	  t.testJSON();
+	  t.testXML();
+	}
 }

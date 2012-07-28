@@ -10,7 +10,7 @@ import batch.Op;
 
 public abstract class BatchFactoryHelper<E> implements BatchFactory<E> {
 
-	public static String ROOT_VAR_NAME = "*";
+	public static String ROOT_VAR_NAME = "ROOT";
 	private E root;
 	private E skip;
 
@@ -64,10 +64,4 @@ public abstract class BatchFactoryHelper<E> implements BatchFactory<E> {
 	public E Skip() {
 		return skip;
 	}
-
-	@Override
-	public E Assign(E target, E source) {
-		return Assign(Op.SEQ, target, source);
-	}
-
 }

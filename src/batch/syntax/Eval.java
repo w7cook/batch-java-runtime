@@ -358,7 +358,7 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	}
 
 	@Override
-	public Evaluate Assign(final Op op, final Evaluate target,
+	public Evaluate Assign(final Evaluate target,
 			final Evaluate source) {
 		return new Evaluate() {
 			public Object evaluate(Map<String, Object> env, Forest inputs,

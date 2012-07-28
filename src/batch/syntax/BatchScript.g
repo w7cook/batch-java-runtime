@@ -5,10 +5,9 @@ tokens {
 	IF = 'if';
 	THEN = 'then';
 	ELSE = 'else';
-	END = 'end';
 	FOR = 'for';
-	DO = 'do';
-	FUN = 'fun';
+	FUNCTION = 'function';
+	OUTPUT = 'OUTPUT';
 	VAR = 'var';
 	TRUE = 'true';
 	FALSE = 'false';	
@@ -32,27 +31,31 @@ package batch.syntax;
     		BatchScriptLexer lexer = new BatchScriptLexer(stream);
     		BatchScriptParser parser = new BatchScriptParser(new CommonTokenStream(
     			lexer));
-    		return parser.block();
+    		return parser.statements();
     	}
 
 }
 
 main returns [Expression value]
-	: e=block { value = e; } EOF
+	: e=statements { value = e; } EOF
 	;
 
-block returns [Expression value]
-	: e=statement {value = e;} (';' (es=block { value = f.Prim(batch.Op.SEQ, value, es); })?)?
-	| VAR x=ID '=' e=expr ';' b=block    { value = f.Let(x.getText(), e, b); }
+statements returns [Expression value]
+	: e=statement {value = e;} (';' (es=statements { value = f.Prim(batch.Op.SEQ, value, es); })?)?
+	| VAR x=ID '=' e=expr ';' b=statements    { value = f.Let(x.getText(), e, b); }
  	;
 
+block returns [Expression value]
+    : '{' e=statements '}'  {value = e;} 
+    ;
+
 statement returns [Expression value]
-	: FOR x=ID IN e=expr DO b=block END  { value = f.Loop(x.getText(), e, b); }
+	: FOR '(' x=ID IN e=expr ')' b=block  { value = f.Loop(x.getText(), e, b); }
 	| e=expr { value = e; }
 	;
 
 expr returns [Expression value]
-	: FUN '(' x=ID ')' e=block	    { value = f.Fun(x.getText(), e); }
+	: FUNCTION '(' x=ID ')' e=block	    { value = f.Fun(x.getText(), e); }
 	| e=or { value = e; }
 	;	 
 
@@ -60,12 +63,8 @@ or returns [Expression value]
 	: a=and {value=a;} ('||' b=or {value=f.Prim(batch.Op.OR, a, b);})?
 	;
 and returns [Expression value]
-	: a=not {value=a;} ('&&' b=and {value=f.Prim(batch.Op.AND, a, b);})?
+	: a=comp {value=a;} ('&&' b=and {value=f.Prim(batch.Op.AND, a, b);})?
 	;  
-not returns [Expression value]
-	: '!' e=not {value=f.Prim(batch.Op.NOT, e); }
-	| e=comp {value=e;}
-	;
 
 comp returns [Expression value]
 	: a=term {value=a;} (op=compop b=comp {value=f.Prim(op, a, b);})?
@@ -95,9 +94,15 @@ mulop returns [batch.Op op]
  	| '/'  { op = batch.Op.DIV; }
  	;
 
+not returns [Expression value]
+	: '!' e=not {value=f.Prim(batch.Op.NOT, e); }
+	| e=comp {value=e;}
+	;
+
+
 base returns [Expression value]
-	: e=assign  { value = e; }
-	| IF a=expr THEN t=block (ELSE e=block)? END  { value = f.If(a, t, e); }
+   :  a=prim {value=a;} ('=' b=expr { value=f.Assign(a, b); })?
+	| IF a=expr THEN t=block (ELSE e=block)?  { value = f.If(a, t, e); }
 	| x=INT { value = f.Data(Integer.parseInt(x.getText())); }
 	| x=STRING { 
 		String str = x.getText();
@@ -113,26 +118,16 @@ base returns [Expression value]
 	| x=FLOAT { value = f.Data(Float.parseFloat(x.getText())); }
 	| x=TRUE { value = f.Data(true); }
 	| x=FALSE{ value = f.Data(false); }
-	| '(' e=block ')' { value = e; }
+	| '(' e=expr ')' { value = e; }
 	;
 
-assign returns [Expression value]
-  :	 a=prim {value=a;} (op=assignop b=expr { value=f.Assign(op, a, b); })?
-  ;
-assignop returns [batch.Op op]
-  : '=' { op = batch.Op.SEQ; }
-  | '+=' { op = batch.Op.ADD; }
-  | '-='  { op = batch.Op.SUB; }
-  | '*='  { op = batch.Op.MUL; }
-  | '||='  { op = batch.Op.OR; }
-  | '&&='  { op = batch.Op.AND; }
-  ;
- 
 prim  returns [Expression value]
-  : b=ID { value = f.Var(b.getText()); }
-    ( ':' e=expr  { value = f.Out(b.getText(), e); }
-    |  r=access[value] { value = r; }
-    )
+  : OUTPUT '(' b=STRING ',' e=expr ')' { 
+  		String str = b.getText();
+		str = str.substring(1, str.length() - 1);
+		value = f.Out(str, e); 
+	}
+  | b=ID { value = f.Var(b.getText()); } r=access[value] { value = r; }
   ;
 
 // Prop and Call
@@ -176,31 +171,19 @@ WS  :   ( ' '
 	) {$channel=HIDDEN;}
     ;
 
-STRING
-    :  '"' ( ESC_SEQ | ~('\\'|'"') )* '"'
-    ;
-
 fragment
 EXPONENT : ('e'|'E') ('+'|'-')? DIGIT+ ;
 
 fragment
-HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;
-
-fragment
-ESC_SEQ
-    :   '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
-    |   UNICODE_ESC
-    |   OCTAL_ESC
-    ;
-
-fragment
-OCTAL_ESC
-    :   '\\' ('0'..'3') ('0'..'7') ('0'..'7')
-    |   '\\' ('0'..'7') ('0'..'7')
-    |   '\\' ('0'..'7')
-    ;
+HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..
+'F') ;
 
 fragment
 UNICODE_ESC
     :   '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
     ;
+
+STRING
+    :  '"' ( '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\') | UNICODE_ESC | ~('\\'|'"') )* '"' // should have 
+    ;
+

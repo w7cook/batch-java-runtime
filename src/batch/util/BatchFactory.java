@@ -19,7 +19,7 @@ public interface BatchFactory<E> {
 	// field access
 	E Prop(E base, String field);
 	// assignment. Target must be Var or Dot
-	E Assign(Op op, E target, E source);
+	E Assign(E target, E source);
 	// control flow
 	E Let(String var, E expression, E body);
 	E If(E condition, E thenExp, E elseExp);
@@ -33,7 +33,6 @@ public interface BatchFactory<E> {
 	// Helper function
 	String RootName();
 	E Root();
-	E Assign(E target, E source);
 	E Prim(Op op, Object... args); // dynamic typing, because new E[] is not legal
 	E Call(E target, String method, Object... args);
 	E Skip();

@@ -75,8 +75,8 @@ class FormatPartition extends PartitionFactoryHelper<ExtraString> {
   }
 
   @Override
-  public ExtraString Assign(Op op, ExtraString target, ExtraString source) {
-    return new ExtraString(f.Assign(op, target.foo, source.foo));
+  public ExtraString Assign(ExtraString target, ExtraString source) {
+    return new ExtraString(f.Assign(target.foo, source.foo));
   }
 
   @Override
@@ -268,15 +268,15 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
 
   // FACTORY
   @Override
-  public PExpr Assign(final Op op, final PExpr target, final PExpr source) {
+  public PExpr Assign(final PExpr target, final PExpr source) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Assign(op, args.get(0), args.get(1))
+        return CodeModel.factory.Assign(args.get(0), args.get(1))
             .setExtraInfo(extraInfo);
       }
 
       public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Assign(op, target.runExtra(f), source.runExtra(f))
+        return f.Assign(target.runExtra(f), source.runExtra(f))
             .setExtraInfo(extraInfo);
       }
 

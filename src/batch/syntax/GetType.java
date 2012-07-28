@@ -174,7 +174,7 @@ public class GetType extends BatchFactoryHelper<TypeGetter> {
 	}
 
 	@Override
-	public TypeGetter Assign(final Op op, final TypeGetter target,
+	public TypeGetter Assign(final TypeGetter target,
 			final TypeGetter source) {
 		return new TypeGetter() {
 			public Class<?> getType(Map<String, Class<?>> typeEnv) {
