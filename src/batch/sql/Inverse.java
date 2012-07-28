@@ -1,0 +1,15 @@
+// Written by William Cook, Ben Wiedermann, Ali Ibrahim
+// The University of Texas at Austin, Department of Computer Science
+// See LICENSE.txt for license information
+package batch.sql;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target( { ElementType.METHOD, ElementType.FIELD })
+public @interface Inverse {
+	String value();
+}
