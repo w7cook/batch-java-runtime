@@ -83,9 +83,9 @@ public class Format extends BatchFactoryHelper<String> {
   @Override
   public String If(String condition, String thenExp, String elseExp) {
     if (elseExp.equals("skip"))
-      return "if (" + condition + ") then {" + thenExp + "}";
+      return "if (" + condition + ") {" + thenExp + "}";
     else
-      return "if (" + condition + ") then {" + thenExp + "} else {" + elseExp
+      return "if (" + condition + ") {" + thenExp + "} else {" + elseExp
           + "}";
   }
 

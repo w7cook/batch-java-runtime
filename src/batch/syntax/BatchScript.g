@@ -3,7 +3,6 @@ grammar BatchScript;
 
 tokens {
 	IF = 'if';
-	THEN = 'then';
 	ELSE = 'else';
 	FOR = 'for';
 	FUNCTION = 'function';
@@ -23,16 +22,16 @@ package batch.syntax;
 }
 
 @members {
-    	Factory f = new batch.syntax.Factory();
-    	
-    	static public Expression parse(String script) throws org.antlr.runtime.RecognitionException {
-    		org.antlr.runtime.CharStream stream = new org.antlr.runtime.ANTLRStringStream(
-    			script);
-    		BatchScriptLexer lexer = new BatchScriptLexer(stream);
-    		BatchScriptParser parser = new BatchScriptParser(new CommonTokenStream(
-    			lexer));
-    		return parser.statements();
-    	}
+      Factory f = new batch.syntax.Factory();
+      
+      static public Expression parse(String script) throws org.antlr.runtime.RecognitionException {
+        org.antlr.runtime.CharStream stream = new org.antlr.runtime.ANTLRStringStream(
+          script);
+        BatchScriptLexer lexer = new BatchScriptLexer(stream);
+        BatchScriptParser parser = new BatchScriptParser(new CommonTokenStream(
+          lexer));
+        return parser.main();
+      }
 
 }
 
@@ -41,7 +40,11 @@ main returns [Expression value]
 	;
 
 statements returns [Expression value]
-	: e=statement {value = e;} (';' (es=statements { value = f.Prim(batch.Op.SEQ, value, es); })?)?
+	: e=statement {value = e;} 
+	  (';' 
+	    (es=statements { value = f.Prim(batch.Op.SEQ, value, es); }
+	    )?
+	  )?
 	| VAR x=ID '=' e=expr ';' b=statements    { value = f.Let(x.getText(), e, b); }
  	;
 
@@ -94,15 +97,10 @@ mulop returns [batch.Op op]
  	| '/'  { op = batch.Op.DIV; }
  	;
 
-not returns [Expression value]
-	: '!' e=not {value=f.Prim(batch.Op.NOT, e); }
-	| e=comp {value=e;}
-	;
-
-
 base returns [Expression value]
-   :  a=prim {value=a;} ('=' b=expr { value=f.Assign(a, b); })?
-	| IF a=expr THEN t=block (ELSE e=block)?  { value = f.If(a, t, e); }
+   :  '!' e=base {value=f.Prim(batch.Op.NOT, e); }
+	| a=prim {value=a;} ('=' b=expr { value=f.Assign(a, b); })?
+	| IF '(' a=expr ')' t=block (ELSE e=block)?  { value = f.If(a, t, e == null ? f.Skip() : e); }
 	| x=INT { value = f.Data(Integer.parseInt(x.getText())); }
 	| x=STRING { 
 		String str = x.getText();

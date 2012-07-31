@@ -43,54 +43,60 @@ import batch.util.Forest;
 
 public class TCPServer<E, T> implements Runnable {
 
-	Service<E, T> handler;
-	ServerSocket socket;
-	BatchTransport transport;
-	BatchFactory<E> factory;
+  Service<E, T> handler;
+  ServerSocket socket;
+  BatchTransport transport;
+  BatchFactory<E> factory;
+  public boolean debug;
 
-	public TCPServer(Service<E, T> handler, ServerSocket socket,
-			BatchTransport transport, BatchFactory<E> factory) throws IOException {
-		this.handler = handler;
-		this.socket = socket;
-		this.transport = transport;
-		this.factory = factory;
-	}
+  public TCPServer(Service<E, T> handler, ServerSocket socket,
+      BatchTransport transport, BatchFactory<E> factory) throws IOException {
+    this.handler = handler;
+    this.socket = socket;
+    this.transport = transport;
+    this.factory = factory;
+  }
 
-	public void run() {
-		while (true) {
-			try {
-				handle(socket.accept());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+  public void run() {
+    while (true) {
+      try {
+        handle(socket.accept());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
 
-	public void handle(Socket connectionSocket) {
-		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-//			Expression exp = BatchScriptParser.parse(in);
-			String script = in.readLine();
-			System.out.println("Script: " + script);
-			Expression exp = BatchScriptParser.parse(script);
-			// Forest data = transport.readForest(in);
-			// System.out.print("Data: ");
-			// System.out.println(data.toString());
-			Writer out = new OutputStreamWriter(connectionSocket.getOutputStream());
-			// TODO: supercompilation can combine the execute and write
-			// phases!
-			Forest result = handler.execute(exp.run(factory), null);
-			transport.write(result, out);
-		} catch (RecognitionException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+  public void handle(Socket connectionSocket) {
+    try {
+      BufferedReader in = new BufferedReader(new InputStreamReader(
+          connectionSocket.getInputStream()));
+      //			Expression exp = BatchScriptParser.parse(in);
+      String script = in.readLine();
+      if (debug)
+        System.out.println("Script: " + script);
+      Expression exp = BatchScriptParser.parse(script);
+      // Forest data = transport.readForest(in);
+      // System.out.print("Data: ");
+      // System.out.println(data.toString());
+      Forest result = handler.execute(exp.run(factory), null);
+      if (debug)
+        transport.write(result, new OutputStreamWriter(System.out));
 
-	public void start() {
-		System.out.println("Server starting on " + socket);
-		Thread thread = new Thread(this);
-		thread.start();
-	}
+      Writer out = new OutputStreamWriter(connectionSocket.getOutputStream());
+      // TODO: supercompilation can combine the execute and write
+      // phases!
+      transport.write(result, out);
+    } catch (RecognitionException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void start() {
+    System.out.println("Server starting on " + socket);
+    Thread thread = new Thread(this);
+    thread.start();
+  }
 }

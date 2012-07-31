@@ -320,7 +320,7 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 					return (BigDecimal) n;
 				if (n instanceof Long || n instanceof Integer || n instanceof Short
 						|| n instanceof Byte) {
-					return new BigDecimal(((Number) n).longValue());
+				 	return new BigDecimal(((Number) n).longValue());
 				} else if (n instanceof Double)
 					return new BigDecimal(((Number) n).doubleValue());
 				else
@@ -416,8 +416,15 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 				final MultiForest itr = results.newCollection(var);
 
 				// Execute Loop
-				Iterable<?> coll = (Iterable<?>) collection.evaluate(env, inputs,
-						results);
+				Iterable<?> coll;
+				Object colOrArray = collection.evaluate(env, inputs,
+            results);
+				if (colOrArray instanceof Iterable)
+				  coll = (Iterable<?>) colOrArray;
+				else {
+				  coll = new ArrayIterator(colOrArray);
+				}
+				
 				for (Object o : coll) {
 					// set the loop variable to the current value in the environment
 					env.put(var, o);
@@ -457,7 +464,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 
 				Method m = null;
 				// Method mAllow = null;
-				for (Method scan : receiver.getClass().getMethods()) {
+				Method[] mtds = receiver.getClass().getMethods();
+				for (Method scan : mtds) {
 					if (scan.getName().equals(method)
 							&& scan.getParameterTypes().length == args.size()) {
 						m = scan;
