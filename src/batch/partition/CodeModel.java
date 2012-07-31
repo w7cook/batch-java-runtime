@@ -425,7 +425,7 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
       // from Exp
       public Effects computeEffects() {
         Effects effects = target.effects();
-        if (!method.startsWith("get"))
+        if (!(method.startsWith("get") || method.equals("length")))
           effects = effects.union(Effects.writeHeap);
         for (PExpr e : args)
           effects = effects.union(e.effects());

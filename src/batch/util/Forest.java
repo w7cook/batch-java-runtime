@@ -251,14 +251,16 @@ public class Forest implements ExpressionBuilder<Forest>, DumpExpression {
 	}
 
 	public void dump(BatchDumper d, Object flag) throws IOException {
-		d.start(null);
-		for (Map.Entry<String, Object> entry : values.entrySet())
-			d.putData(entry.getKey(), entry.getValue());
-		for (Map.Entry<String, MultiForest> entry : iterations.entrySet()) {
-			d.beginList(entry.getKey());
-			entry.getValue().putItems(d);
-			d.endList();
-		}
-		d.end();
+	  if (!isEmpty()) {
+  		d.start(null);
+  		for (Map.Entry<String, Object> entry : values.entrySet())
+  			d.putData(entry.getKey(), entry.getValue());
+  		for (Map.Entry<String, MultiForest> entry : iterations.entrySet()) {
+  			d.beginList(entry.getKey());
+  			entry.getValue().putItems(d);
+  			d.endList();
+  		}
+  		d.end();
+	  }
 	}
 }
