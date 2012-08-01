@@ -40,6 +40,6 @@ public interface PExpr extends ExtraInfo<PExpr> {
 
 	public String asVar();
 
-	public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f);
+	public <E> E runExtra(PartitionFactory<E> f);
 
 }

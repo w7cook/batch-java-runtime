@@ -1,6 +1,5 @@
 package batch.partition;
 
 public interface ExtraInfo<E> {
-	public E setExtraInfo(Object info);
-
+	public E setExtra(Object info);
 }

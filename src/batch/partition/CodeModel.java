@@ -28,106 +28,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 import batch.Op;
+import batch.syntax.Format;
 
-class ExtraString implements ExtraInfo<ExtraString> {
-  public ExtraString setExtraInfo(Object info) {
-    return this;
-  }
+class FormatPartition extends Format implements PartitionFactory<String> {
 
-  public String foo;
-
-  public ExtraString(String foo) {
-    super();
-    this.foo = foo;
-  }
-}
-
-class FormatPartition extends PartitionFactoryHelper<ExtraString> {
-  batch.syntax.Format f;
-
-  public FormatPartition() {
-    f = new batch.syntax.Format();
-  }
-
-  public ExtraString Var(String name) {
-    f = new batch.syntax.Format();
-    return new ExtraString(f.Var(name));
-  }
-
-  public ExtraString Data(Object value) {
-    return new ExtraString(f.Data(value));
-  }
-
-  public ExtraString Fun(String var, ExtraString body) {
-    return new ExtraString(f.Fun(var, body.foo));
-  }
-
-  public ExtraString Prim(Op op, List<ExtraString> args) {
+  public String Other(Object external, List<String> subs) {
     List<String> l = new ArrayList<String>();
-    for (ExtraString e : args)
-      l.add(e.foo);
-    return new ExtraString(f.Prim(op, l));
+    for (String e : subs)
+      l.add(e);
+    return new String("OTHER[" + l + "]");
+  }
+
+  public String DynamicCall(String target, String method,
+      List<String> args) {
+    return new String("[DYNAMIC]");
+  }
+
+  public String Mobile(String type, String exp) {
+    return new String("[MOBILE:" + exp + "]");
   }
 
   @Override
-  public ExtraString Prop(ExtraString base, String field) {
-    return new ExtraString(f.Prop(base.foo, field));
+  public String Other(Object external, String... subs) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
   @Override
-  public ExtraString Assign(ExtraString target, ExtraString source) {
-    return new ExtraString(f.Assign(target.foo, source.foo));
-  }
-
-  @Override
-  public ExtraString Let(String var, ExtraString expression, ExtraString body) {
-    return new ExtraString(f.Let(var, expression.foo, body.foo));
-  }
-
-  @Override
-  public ExtraString If(ExtraString condition, ExtraString thenExp,
-      ExtraString elseExp) {
-    return new ExtraString(f.If(condition.foo, thenExp.foo, elseExp.foo));
-  }
-
-  @Override
-  public ExtraString Loop(String var, ExtraString collection, ExtraString body) {
-    return new ExtraString(f.Loop(var, collection.foo, body.foo));
-  }
-
-  @Override
-  public ExtraString Call(ExtraString target, String method,
-      List<ExtraString> args) {
-    List<String> l = new ArrayList<String>();
-    for (ExtraString e : args)
-      l.add(e.foo);
-    return new ExtraString(f.Call(target.foo, method, l));
-  }
-
-  @Override
-  public ExtraString In(String location) {
-    return new ExtraString(f.In(location));
-  }
-
-  @Override
-  public ExtraString Out(String location, ExtraString expression) {
-    return new ExtraString(f.Out(location, expression.foo));
-  }
-
-  @Override
-  public ExtraString Other(Object external, List<ExtraString> subs) {
-    return new ExtraString("[OTHER]");
-  }
-
-  @Override
-  public ExtraString DynamicCall(ExtraString target, String method,
-      List<ExtraString> args) {
-    return new ExtraString("[DYNAMIC]");
-  }
-
-  @Override
-  public ExtraString Mobile(String type, ExtraString exp) {
-    return new ExtraString("[MOBILE:" + exp.foo + "]");
+  public String setExtra(String exp, Object extra) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }
@@ -158,7 +88,7 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
       return this;
     }
 
-    public PExpr setExtraInfo(Object info) {
+    public PExpr setExtra(Object info) {
       extraInfo = info;
       return this;
     }
@@ -204,8 +134,8 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
 
     public String toString() {
       FormatPartition f = new FormatPartition();
-      ExtraString e = runExtra(f);
-      return e.foo;
+      String e = runExtra(f);
+      return e;
     }
 
   }
@@ -271,13 +201,13 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Assign(final PExpr target, final PExpr source) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Assign(args.get(0), args.get(1))
-            .setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Assign(args.get(0), args.get(1)),
+            extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Assign(target.runExtra(f), source.runExtra(f))
-            .setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Assign(target.runExtra(f), source.runExtra(f)),
+            extraInfo);
       }
 
       // align outputs and then perform assignment
@@ -304,8 +234,8 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Data(final Object value) {
     return new Data() {
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Data(value).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Data(value), extraInfo);
       }
 
       public History partition(Place desired, Environment env) {
@@ -325,12 +255,12 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Prop(final PExpr base, final String field) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Prop(args.get(0), field).setExtraInfo(
+        return CodeModel.factory.setExtra(CodeModel.factory.Prop(args.get(0), field),
             extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Prop(base.runExtra(f), field).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Prop(base.runExtra(f), field), extraInfo);
       }
 
       public History partition(Place desired, Environment env) {
@@ -350,23 +280,20 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
       boolean optimizeLoop;
 
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.If(args.get(0), args.get(1), args.get(2))
-            .setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.If(args.get(0), args.get(1), args.get(2))
+            , extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.If(condition.runExtra(f), thenExp.runExtra(f),
-            elseExp.runExtra(f)).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.If(condition.runExtra(f), thenExp.runExtra(f),
+            elseExp.runExtra(f)), extraInfo);
       }
 
       public void inLoop() {
         if (thenExp == factory.Skip() || elseExp == factory.Skip())
-          if (!condition.effects().hasWriteEffect()) {
-            optimizeLoop = true;
-            thenExp.inLoop();
-            elseExp.inLoop();
-          } else
-            System.out.println("WARNING: effect in If prevents optimization");
+          optimizeLoop = true;
+        thenExp.inLoop();
+        elseExp.inLoop();
       }
 
       // delay If branches as long as there is a side effect
@@ -406,16 +333,16 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
         List<PExpr> rest = new ArrayList<PExpr>();
         for (int i = 1/* yes this should be 1 */; i < args.size(); i++)
           rest.add(args.get(i));
-        return CodeModel.factory.Call(args.get(0), method, rest).setExtraInfo(
+        return CodeModel.factory.setExtra(CodeModel.factory.Call(args.get(0), method, rest),
             extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
+      public <E> E runExtra(PartitionFactory<E> f) {
         List<E> trans = new ArrayList<E>();
         for (int i = 0; i < args.size(); i++)
           trans.add(args.get(i).runExtra(f));
-        return f.Call(target.runExtra(f), method, trans)
-            .setExtraInfo(extraInfo);
+        return f.setExtra(f.Call(target.runExtra(f), method, trans)
+            , extraInfo);
       }
 
       public History partition(Place desired, Environment env) {
@@ -442,15 +369,15 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
         List<PExpr> rest = new ArrayList<PExpr>();
         for (int i = 1/* yes this should be 1 */; i < args.size(); i++)
           rest.add(args.get(i));
-        return CodeModel.factory.DynamicCall(args.get(0), method, rest)
-            .setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.DynamicCall(args.get(0), method, rest)
+            , extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
+      public <E> E runExtra(PartitionFactory<E> f) {
         List<E> trans = new ArrayList<E>();
         for (int i = 0; i < args.size(); i++)
           trans.add(args.get(i).runExtra(f));
-        return f.DynamicCall(target.runExtra(f), method, trans).setExtraInfo(
+        return f.setExtra(f.DynamicCall(target.runExtra(f), method, trans),
             extraInfo);
       }
 
@@ -480,13 +407,13 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Let(final String var, final PExpr expression, final PExpr body) {
     return new Control() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Let(var, args.get(0), args.get(1))
-            .setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Let(var, args.get(0), args.get(1))
+            , extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Let(var, expression.runExtra(f), body.runExtra(f))
-            .setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Let(var, expression.runExtra(f), body.runExtra(f))
+            , extraInfo);
       }
 
       @Override
@@ -527,14 +454,14 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Other(final Object obj, final List<PExpr> args) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Other(obj, args).setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Other(obj, args), extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
+      public <E> E runExtra(PartitionFactory<E> f) {
         List<E> trans = new ArrayList<E>();
         for (int i = 0; i < args.size(); i++)
           trans.add(args.get(i).runExtra(f));
-        return f.Other(obj, trans).setExtraInfo(extraInfo);
+        return f.setExtra(f.Other(obj, trans), extraInfo);
       }
 
       public History partition(Place desired, Environment env) {
@@ -565,13 +492,13 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
     return new Control() {
 
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Loop(var, args.get(0), args.get(1))
-            .setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Loop(var, args.get(0), args.get(1))
+            , extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Loop(var, collection.runExtra(f), body.runExtra(f))
-            .setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Loop(var, collection.runExtra(f), body.runExtra(f))
+            , extraInfo);
       }
 
       // delay based on effects or use of variable
@@ -601,28 +528,28 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   @Override
   public PExpr Prim(final Op op, final List<PExpr> args) {
     if (op == Op.SEQ) {
-      for (int i = args.size(); i-- > 0; )
+      for (int i = args.size(); i-- > 0;)
         if (args.get(i) == Skip())
           args.remove(i);
     }
     return new Base() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Prim(op, args).setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Prim(op, args), extraInfo);
         /*
          * List<PExpr> rest = new ArrayList<PExpr>(); for (int i = 0; i <
          * args.size(); i++) { if (op == Op.SEQ && args.get(i) instanceof
          * CodeModel.Prim) { Prim sub = (Prim) args.get(i); List<PExpr> subArgs
          * = sub.getArgs(); if (sub.getOp() == op) { for (PExpr o : subArgs)
          * rest.add(o); continue; } else if (subArgs.size() == 0) continue; }
-         * rest.add(args.get(i)); } return CodeModel.factory.Prim(op, rest);
+         * rest.add(args.get(i)); } return CodeModel.factory.setExtra(CodeModel.factory.Prim(op, rest);
          */
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
+      public <E> E runExtra(PartitionFactory<E> f) {
         List<E> trans = new ArrayList<E>();
         for (int i = 0; i < args.size(); i++)
           trans.add(args.get(i).runExtra(f));
-        return f.Prim(op, trans).setExtraInfo(extraInfo);
+        return f.setExtra(f.Prim(op, trans), extraInfo);
       }
 
       public History partition(Place desired, Environment env) {
@@ -649,8 +576,8 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr In(final String location) {
     return new Data() {
       @Override
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.In(location).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.In(location), extraInfo);
       }
     };
   }
@@ -658,12 +585,12 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Out(final String location, final PExpr expression) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Out(location, args.get(0)).setExtraInfo(
+        return CodeModel.factory.setExtra(CodeModel.factory.Out(location, args.get(0)),
             extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Out(location, expression.runExtra(f)).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Out(location, expression.runExtra(f)), extraInfo);
       }
     };
   }
@@ -686,13 +613,12 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
       }
 
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Mobile(type, args.get(0)).setExtraInfo(
+        return CodeModel.factory.setExtra(CodeModel.factory.Mobile(type, args.get(0)),
             extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Mobile(type, expression.runExtra(f)).setExtraInfo(
-            extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Mobile(type, expression.runExtra(f)), extraInfo);
       }
 
     };
@@ -706,8 +632,8 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
         return env.lookup(name, extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Var(name).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Var(name), extraInfo);
       }
 
       @Override
@@ -725,11 +651,11 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
   public PExpr Fun(final String var, final PExpr body) {
     return new Data() {
       public PExpr clone(List<PExpr> args) {
-        return CodeModel.factory.Fun(var, body).setExtraInfo(extraInfo);
+        return CodeModel.factory.setExtra(CodeModel.factory.Fun(var, body), extraInfo);
       }
 
-      public <E extends ExtraInfo<E>> E runExtra(PartitionFactory<E> f) {
-        return f.Fun(var, body.runExtra(f)).setExtraInfo(extraInfo);
+      public <E> E runExtra(PartitionFactory<E> f) {
+        return f.setExtra(f.Fun(var, body.runExtra(f)), extraInfo);
       }
 
       // see Exp.java for explanations
@@ -741,6 +667,11 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
         return hl.merge_outputs_at(place, this);
       }
     };
+  }
+
+  @Override
+  public PExpr setExtra(PExpr exp, Object extra) {
+    return exp.setExtra(extra);
   }
 
 }

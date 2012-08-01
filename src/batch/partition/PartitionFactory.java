@@ -16,4 +16,6 @@ public interface PartitionFactory<E> extends BatchFactory<E> {
 	public E DynamicCall(E target, String method, List<E> args);
 
 	public E Mobile(String type, E exp);
+	
+	public E setExtra(E exp, Object extra);
 }

@@ -30,7 +30,7 @@ public class Stage {
 	}
 
 	public void makeOutput(CodeModel model, String sym, String type2) {
-		action = CodeModel.factory.Out(sym, action).setExtraInfo(type2);
+		action = CodeModel.factory.Out(sym, action).setExtra(type2);
 	}
 
 	public void setPlace(Place place) {

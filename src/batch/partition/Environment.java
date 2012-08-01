@@ -18,7 +18,7 @@ public class Environment {
 
 	public History lookup(String name, Object info) {
 		return new History(model).add(new Stage(Place.LOCAL, CodeModel.factory
-				.Var(name).setExtraInfo(info)));
+				.Var(name).setExtra(info)));
 	}
 }
 
@@ -33,7 +33,7 @@ class ExtendedEnvironment extends Environment {
 			Environment next) {
 		super(model);
 		this.varName = name;
-		this.var = CodeModel.factory.Var(name).setExtraInfo(info);
+		this.var = CodeModel.factory.Var(name).setExtra(info);
 		this.place = place;
 		this.next = next;
 	}
