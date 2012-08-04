@@ -56,8 +56,7 @@ class FormatPartition extends Format implements PartitionFactory<String> {
 
   @Override
   public String setExtra(String exp, Object extra) {
-    // TODO Auto-generated method stub
-    return null;
+    return exp;
   }
 
 }
