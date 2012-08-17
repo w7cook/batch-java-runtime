@@ -419,6 +419,7 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
       public void inLoop() {
         if (!expression.effects().hasWriteEffect())
           body.inLoop();
+        // TODO: can't optimize if the client has effects!
         // else if (body instanceof CodeModel.If) // TODO: send message!
         // System.out
         // .println("WARNING: effect in let prevents optimization");

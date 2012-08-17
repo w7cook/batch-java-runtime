@@ -11,11 +11,9 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.runtime.RecognitionException;
-
 import batch.Op;
 import batch.json.JSONTransport;
-import batch.syntax.BatchScriptParser;
+import batch.syntax.Parser;
 import batch.syntax.Expression;
 import batch.syntax.Format;
 import batch.util.BatchFactory;
@@ -99,13 +97,13 @@ public class TestSerializer {
 	}
 
 	//@Test
-	public void testScript() throws RecognitionException {
+	public void testScript() {
 		Format formatter = new Format();
 		for (Expression e : generateExpressions()) {
 			String script = e.run(formatter);
 			System.out.println("OUT: " + script);
 			Expression e2;
-			e2 = BatchScriptParser.parse(script);
+			e2 = Parser.parse(script);
 			String script2 = e2.run(formatter);
 			System.out.println("CHK: " + script2);
 	    if (!script.equals(script2)) {
@@ -144,7 +142,7 @@ public class TestSerializer {
 		}
 	}
 
-	public static void main(String[] args) throws RecognitionException, IOException {
+	public static void main(String[] args) throws IOException {
 	  TestSerializer t = new TestSerializer();
     t.testScript();
 	  t.testJSON();

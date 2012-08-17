@@ -32,10 +32,8 @@ import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.antlr.runtime.RecognitionException;
-
 import batch.Service;
-import batch.syntax.BatchScriptParser;
+import batch.syntax.Parser;
 import batch.syntax.Expression;
 import batch.util.BatchFactory;
 import batch.util.BatchTransport;
@@ -75,7 +73,7 @@ public class TCPServer<E, T> implements Runnable {
       String script = in.readLine();
       if (debug)
         System.out.println("Script: " + script);
-      Expression exp = BatchScriptParser.parse(script);
+      Expression exp = Parser.parse(script);
       // Forest data = transport.readForest(in);
       // System.out.print("Data: ");
       // System.out.println(data.toString());
@@ -87,8 +85,6 @@ public class TCPServer<E, T> implements Runnable {
       // TODO: supercompilation can combine the execute and write
       // phases!
       transport.write(result, out);
-    } catch (RecognitionException e) {
-      e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
     }
