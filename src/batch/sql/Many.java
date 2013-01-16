@@ -15,7 +15,8 @@ public abstract class Many<T> implements Iterable<T> {
 	
 	abstract public T create();
 
-	abstract public <P extends Comparable<P>> Many<T> orderBy(Fun<T, P> f, boolean asc);
+  abstract public <P extends Comparable<P>> Many<T> orderBy(Fun<T, P> f);
+  abstract public <P extends Comparable<P>> Many<T> orderByDescending(Fun<T, P> f);
 
 	abstract public int count();
 

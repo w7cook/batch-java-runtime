@@ -12,7 +12,7 @@ import batch.sql.schema.IMember;
 import batch.sql.schema.IRelationship;
 import batch.sql.schema.ISchema;
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public class SQLField extends ValueExpression {
 
@@ -55,7 +55,7 @@ public class SQLField extends ValueExpression {
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		// SQLQuery query = getQuery();
 		// if (query.sqlAction == SQLAction.VALUE) {
 		// query.sqlAction = SQLAction.SELECT;
@@ -65,7 +65,7 @@ public class SQLField extends ValueExpression {
 		toSQLinside(sb, params, data);
 	}
 
-	public void toSQLinside(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQLinside(StringBuilder sb, List<Object> params, ForestReader data) {
 		table.toSQL(sb, params, data);
 		sb.append('.');
 		sb.append(member.columnName());

@@ -5,10 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import batch.syntax.Lexer.TokenType;
+import batch.Op;
+import batch.util.BatchFactory;
 
-public class Parser {
-  Factory f;
+public class Parser<E> {
+  BatchFactory<E> f;
   Lexer in;
   Symbol kind;
   Object data;
@@ -37,14 +38,14 @@ public class Parser {
     }
   }
 
-  static public Expression parse(String script) {
-    Parser p = new Parser(script);
+  static public <E> E parse(String script, BatchFactory<E> f) {
+    Parser<E> p = new Parser<E>(script, f);
     return p.main();
   }
 
-  public Parser(String script) {
+  public Parser(String script, BatchFactory<E> f) {
     Symbol.values(); // required to create the enum!
-    f = new batch.syntax.Factory();
+    this.f = f;
     in = new Lexer(script);
     next();
   }
@@ -121,73 +122,73 @@ public class Parser {
         }
 
    */
-  Expression main() {
-    Expression value = statements();
+  E main() {
+    E value = statements();
     if (kind != Symbol.EOF)
       throw new Error("Expected EOF");
     return value;
   }
 
-  Expression statements() {
-    Expression value = statement();
+  E statements() {
+    E value = statement();
     if (match(Symbol.SEMI)) {
-      Expression es = statements();
+      E es = statements();
       if (es != null)
         value = f.Prim(batch.Op.SEQ, value, es);
     }
     return value;
   }
 
-  Expression block() {
+  E block() {
     require(Symbol.LCURLY);
-    Expression e = statements();
+    E e = statements();
     require(Symbol.RCURLY);
     return e;
   }
 
-  Expression statement() {
+  E statement() {
     if (match(Symbol.FOR)) {
       match(Symbol.LPAREN);
       String v = ID();
       match(Symbol.IN);
-      Expression e = expr();
+      E e = expr();
       match(Symbol.RPAREN);
-      Expression b = block();
+      E b = block();
       return f.Loop(v, e, b);
     } else if (match(Symbol.VAR)) {
       String v = ID();
       require(Symbol.ASSIGN);
-      Expression e = expr();
+      E e = expr();
       require(Symbol.SEMI);
-      Expression b = statements();
+      E b = statements();
       return f.Let(v, e, b);
     } else
       return expr();
   }
 
-  Expression expr() {
-    Expression a = and();
+  E expr() {
+    E a = and();
     if (match(Symbol.OR)) {
-      Expression b = expr();
+      E b = expr();
       return f.Prim(batch.Op.OR, a, b);
     }
     return a;
   }
 
-  Expression and() {
-    Expression a = comp();
+  E and() {
+    E a = comp();
     if (match(Symbol.AND)) {
-      Expression b = and();
+      E b = and();
       return f.Prim(batch.Op.AND, a, b);
     }
     return a;
   }
 
-  Expression comp() {
-    Expression a = term();
+  E comp() {
+    E a = term();
     batch.Op op = compop();
     if (op != null) {
-      Expression b = comp();
+      E b = comp();
       return f.Prim(op, a, b);
     }
     return a;
@@ -209,11 +210,11 @@ public class Parser {
     return null;
   }
 
-  Expression term() {
-    Expression a = factor();
+  E term() {
+    E a = factor();
     batch.Op op = addop();
     if (op != null) {
-      Expression b = term();
+      E b = term();
       return f.Prim(op, a, b);
     }
     return a;
@@ -227,11 +228,11 @@ public class Parser {
     return null;
   }
 
-  Expression factor() {
-    Expression a = base();
+  E factor() {
+    E a = base();
     batch.Op op = mulop();
     if (op != null) {
-      Expression b = factor();
+      E b = factor();
       return f.Prim(op, a, b);
     }
     return a;
@@ -245,8 +246,8 @@ public class Parser {
     return null;
   }
 
-  Expression base() {
-    Expression e;
+  E base() {
+    E e;
     switch (kind) {
     case NUMBER:
       Object d = data;
@@ -282,11 +283,11 @@ public class Parser {
     case IF: {
       next();
       match(Symbol.LPAREN);
-      Expression a = expr();
+      E a = expr();
       match(Symbol.RPAREN);
-      Expression b = block();
+      E b = block();
       if (match(Symbol.ELSE)) {
-        Expression c = block();
+        E c = block();
         return f.If(a, b, c);
       }
       return f.If(a, b, f.Skip());
@@ -305,9 +306,9 @@ public class Parser {
       next();
       return f.Data(false);
     default: {
-      Expression a = prim();
+      E a = prim();
       if (match(Symbol.ASSIGN)) {
-        Expression b = expr();
+        E b = expr();
         return f.Assign(a, b);
       }
       return a;
@@ -315,29 +316,29 @@ public class Parser {
     }
   }
 
-  Expression prim() {
+  E prim() {
     if (match(Symbol.OUTPUT)) {
       match(Symbol.LPAREN);
       String str = String();
       match(Symbol.COMMA);
-      Expression e = expr();
+      E e = expr();
       match(Symbol.RPAREN);
       return f.Out(str, e);
     } else {
-      Expression value = f.Var(ID());
+      E value = f.Var(ID());
       return access(value);
     }
   }
 
   // Prop and Call
-  Expression access(Expression value) {
+  E access(E value) {
     String field = null;
     if (match(Symbol.DOT)) {
       field = ID();
       if (match(Symbol.LPAREN)) {
-        List<Expression> args = new ArrayList<Expression>();
+        List<E> args = new ArrayList<E>();
         if (!match(Symbol.RPAREN)) {
-          Expression e = expr();
+          E e = expr();
           args.add(e);
           while (match(Symbol.COMMA)) {
             e = expr();
@@ -350,6 +351,17 @@ public class Parser {
         value = f.Prop(value, field);
     }
     return field == null ? value : access(value);
+  }
+
+  public static <E> E binary(BatchFactory<E> factory, Op op, E c1, E c2) {
+    if (c1 == null)
+      return c2;
+    if (c2 == null)
+      return c1;
+    List<E> args = new ArrayList<E>(2);
+    args.add(c1);
+    args.add(c2);
+    return factory.Prim(op, args);
   }
 
 }

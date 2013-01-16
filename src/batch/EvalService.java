@@ -32,6 +32,8 @@ import batch.syntax.Eval;
 import batch.syntax.Evaluate;
 import batch.util.BatchCancel;
 import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class EvalService<I> extends Eval implements Service<Evaluate, I> {
 
@@ -55,11 +57,15 @@ public class EvalService<I> extends Eval implements Service<Evaluate, I> {
     this.root = root;
   }
 
-  public Forest execute(Evaluate exp, Forest in) {
+  @Override
+  public ForestReader execute(Evaluate exp, ForestReader in) {
+    Forest out = new Forest();
+    executeServer(exp, in, out);
+    return out;
+  }
 
+  public void executeServer(Evaluate exp, ForestReader in, ForestWriter result) {
     //		System.out.println("EvalService " + exp.toString());
-
-    Forest result = new Forest();
     Map<String, Object> env = new HashMap<String, Object>();
     env.put(RootName(), root);
 
@@ -69,14 +75,13 @@ public class EvalService<I> extends Eval implements Service<Evaluate, I> {
     }
 
     System.out.println("Output forest: " + result.toString());
-
-    return result;
   }
 
   public Iterator<I> iterator() {
     System.out.println("Returning iterator");
     return new SingletonIterator<I>(root);
   }
+
 }
 
 class SingletonIterator<R> implements Iterator<R> {

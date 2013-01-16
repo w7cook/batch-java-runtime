@@ -6,7 +6,7 @@ package batch.sql.syntax;
 import java.util.List;
 
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public class Input extends ValueExpression {
 
@@ -14,6 +14,7 @@ public class Input extends ValueExpression {
 	
 	public Input(String location) {
 		this.location = location;
+		setValue();
 	}
 
 	public <E> E run(BatchFactory<E> f) {
@@ -21,7 +22,7 @@ public class Input extends ValueExpression {
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		if (params != null) {
 			params.add(data.get(location));
 			sb.append("?");

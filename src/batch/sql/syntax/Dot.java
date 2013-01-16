@@ -20,6 +20,7 @@ public class Dot extends ValueExpression {
 		super();
 		this.base = base;
 		this.field = field;
+		base.setValue();
 	}
 
 	@Override

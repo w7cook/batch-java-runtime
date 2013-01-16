@@ -9,7 +9,7 @@ import java.io.Writer;
 
 public interface BatchTransport {
 
-	void write(Forest data, Writer out) throws IOException;
+	ForestWriter writer(Writer out) throws IOException;
 
-	Forest read(Reader in) throws IOException;
+	ForestReader read(Reader in) throws IOException;
 }

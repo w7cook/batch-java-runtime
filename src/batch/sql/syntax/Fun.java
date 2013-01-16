@@ -14,6 +14,7 @@ public class Fun extends ValueExpression {
 		super();
 		this.var = var;
 		this.body = body;
+		body.setValue();
 	}
 
 	public String getVar() {

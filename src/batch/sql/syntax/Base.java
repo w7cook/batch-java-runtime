@@ -30,18 +30,22 @@ import batch.sql.schema.IAlias;
 import batch.sql.schema.IEntityType;
 import batch.sql.schema.IMember;
 import batch.sql.schema.ISchema;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public abstract class Base implements SQLTranslation {
 
 	int srcColumn;
-
+	boolean isValue;
 	int srcLine;
 
 	public String toString() {
 		return run(new batch.syntax.Format());
 	}
 
+	public void setValue() {
+	  isValue = true;
+	}
+	
 	public SQLTable getTableNoJoins(Env env) {
 		throw new Error("NOT NEEDED???");
 	}
@@ -58,7 +62,7 @@ public abstract class Base implements SQLTranslation {
 		return this;
 	}
 
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		throw new Error("should never happen");
 	}
 

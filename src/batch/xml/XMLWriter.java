@@ -11,11 +11,10 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import batch.DataType;
-import batch.util.BatchDumper;
-import batch.util.DumpExpression;
+import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
-public class XMLWriter extends TransportHelper implements BatchDumper {
+public class XMLWriter extends TransportHelper implements ForestWriter {
 
 	XMLStreamWriter xml;
 	boolean explicitFields;
@@ -100,7 +99,7 @@ public class XMLWriter extends TransportHelper implements BatchDumper {
 
 	@Override
 	public void beginList(String field) throws IOException {
-		if (explicitFields)
+//		if (explicitFields)
 			start(field);
 	}
 
@@ -111,7 +110,7 @@ public class XMLWriter extends TransportHelper implements BatchDumper {
 
 	@Override
 	public void endList() throws IOException {
-		if (explicitFields)
+//		if (explicitFields)
 			end();
 	}
 }

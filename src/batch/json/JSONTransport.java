@@ -8,18 +8,16 @@ import java.io.Reader;
 import java.io.Writer;
 
 import batch.util.BatchTransport;
-import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class JSONTransport implements	BatchTransport {
 
-	public void write(Forest data, Writer out) throws IOException {
-		JSONWriter dumper = new JSONWriter(out);
-		data.dump(dumper, null);
-		dumper.finish();
+	public ForestWriter writer(Writer out) throws IOException {
+		return new JSONWriter(out);
 	}
 
-	public Forest read(Reader in) throws IOException {
-		JSONReader reader = new JSONReader(Forest.dynamicFactory);
-		return reader.read(in);
+	public ForestReader read(Reader in) throws IOException {
+		return new JSONReader(in);
 	}
 }

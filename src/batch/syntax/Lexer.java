@@ -1,8 +1,8 @@
 package batch.syntax;
 
 import java.util.Iterator;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lexer implements Iterator<Lexer.Token>, Iterable<Lexer.Token> {
   private static int numToken = 1;

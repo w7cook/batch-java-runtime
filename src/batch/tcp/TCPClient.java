@@ -36,7 +36,8 @@ import java.util.Iterator;
 import batch.Service;
 import batch.syntax.Format;
 import batch.util.BatchTransport;
-import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class TCPClient<I> extends Format implements Service<String, I> {
 
@@ -52,7 +53,13 @@ public class TCPClient<I> extends Format implements Service<String, I> {
 		this.port = port;
 	}
 
-	public Forest execute(String exp, Forest data) {
+  @Override
+  public void executeServer(String exp, ForestReader data, ForestWriter results) {
+    throw new Error("TCPClient should not be called in server mode");
+  }
+
+
+  public ForestReader execute(String exp, ForestReader data) {
 		try {
 			Socket socket = new Socket(address, port);
 			Writer out = new OutputStreamWriter(socket.getOutputStream());
@@ -60,9 +67,7 @@ public class TCPClient<I> extends Format implements Service<String, I> {
 			out.write("\r\n");
 			out.flush();
 			Reader in = new InputStreamReader(socket.getInputStream());
-			Forest result = transport.read(in);
-			socket.close();
-			return result;
+			return transport.read(in); // async read!!!
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

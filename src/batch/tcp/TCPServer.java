@@ -28,31 +28,26 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import batch.Service;
 import batch.syntax.Parser;
-import batch.syntax.Expression;
-import batch.util.BatchFactory;
 import batch.util.BatchTransport;
-import batch.util.Forest;
+import batch.util.ForestWriter;
 
 public class TCPServer<E, T> implements Runnable {
 
   Service<E, T> handler;
   ServerSocket socket;
   BatchTransport transport;
-  BatchFactory<E> factory;
   public boolean debug;
 
   public TCPServer(Service<E, T> handler, ServerSocket socket,
-      BatchTransport transport, BatchFactory<E> factory) throws IOException {
+      BatchTransport transport) throws IOException {
     this.handler = handler;
     this.socket = socket;
     this.transport = transport;
-    this.factory = factory;
   }
 
   public void run() {
@@ -73,18 +68,14 @@ public class TCPServer<E, T> implements Runnable {
       String script = in.readLine();
       if (debug)
         System.out.println("Script: " + script);
-      Expression exp = Parser.parse(script);
+      E exp = Parser.parse(script, handler);
       // Forest data = transport.readForest(in);
       // System.out.print("Data: ");
       // System.out.println(data.toString());
-      Forest result = handler.execute(exp.run(factory), null);
-      if (debug)
-        transport.write(result, new OutputStreamWriter(System.out));
-
-      Writer out = new OutputStreamWriter(connectionSocket.getOutputStream());
+      ForestWriter response = transport.writer(new OutputStreamWriter(System.out));
+      handler.executeServer(exp, null, response);
       // TODO: supercompilation can combine the execute and write
       // phases!
-      transport.write(result, out);
     } catch (IOException e) {
       e.printStackTrace();
     }

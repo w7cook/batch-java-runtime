@@ -35,6 +35,8 @@ import batch.sql.syntax.Prim;
 import batch.sql.syntax.SQLQuery;
 import batch.sql.syntax.SQLTranslation;
 import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQLTranslation, T> {
 
@@ -51,16 +53,31 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		this.schema = new Schema(rootClass);
 	}
 
-	public Forest execute(SQLTranslation exp, Forest data) {
-		// Top-level
-		batch.sql.syntax.SQLTable.tagNum = 1;
-		System.err.println(exp.toString());
-		Forest results = invokeDatabase(setupQueries(exp), data);
-		//System.out.println(results.toString());
-		return results;
+  public ForestReader execute(SQLTranslation exp, ForestReader in) {
+    Forest out = new Forest();
+    executeServer(exp, in, out);
+    return out;
+  }
+
+  public void executeServer(SQLTranslation exp, ForestReader in, ForestWriter out) {
+		// For now, we have to execute the full thing, then copy the results!
+    // instead we need to read asynchronously from all the queries at the same
+    // time, to be able to stream results!
+    Forest out2 = out instanceof Forest ? (Forest)out : new Forest();
+    batch.sql.syntax.SQLTable.tagNum = 1;
+    System.err.println(exp.toString());
+    invokeDatabase(setupQueries(exp), in, out2);
+    System.out.println( out.toString() );
+    if (out != out2)
+      out2.copyTo(out);
 	}
 
-	public SQLQuery setupQueries(SQLTranslation exp) {
+	private void copyForest(ForestReader temp, ForestWriter out) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  public SQLQuery setupQueries(SQLTranslation exp) {
 		rootQuery = new SQLQuery(true);
 		Env env = new Env(rootQuery);
 		doQueries(exp, env);
@@ -77,7 +94,7 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		}
 	}
 
-	protected String getSQL(SQLQuery q, List<Object> params, Forest data) {
+	protected String getSQL(SQLQuery q, List<Object> params, ForestReader data) {
 		StringBuilder sb = new StringBuilder();
 		q.toSQL(sb, params, data);
 		String sql = sb.toString();
@@ -85,11 +102,10 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		return sql;
 	}
 
-	protected Forest invokeDatabase(SQLQuery q, Forest data) {
+	protected void invokeDatabase(SQLQuery q, ForestReader data, Forest results) {
 		getSQL(q, null, data);
 		for (SQLQuery sub : q.getSubqueries())
-			invokeDatabase(sub, data);
-		return null;
+			invokeDatabase(sub, data, results);
 	}
 
 	public Iterator<T> iterator() {

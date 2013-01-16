@@ -7,7 +7,7 @@ import java.util.List;
 
 import batch.sql.schema.ISchema;
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public class Var extends ValueExpression {
 
@@ -36,7 +36,7 @@ public class Var extends ValueExpression {
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		sb.append(name);
 	}
 

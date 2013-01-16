@@ -5,22 +5,23 @@ package batch.syntax;
 
 import java.util.Map;
 
-import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class FunClosure<E extends Evaluate> {
 	String var;
 	Map<String, Object> env;
 	E body;
-	Forest inputs;
+	ForestReader inputs;
 
-	public FunClosure(String var, E body, Map<String, Object> env, Forest inputs) {
+	public FunClosure(String var, E body, Map<String, Object> env, ForestReader inputs) {
 		this.var = var;
 		this.body = body;
 		this.env = env;
 		this.inputs = inputs;
 	}
 
-	public Object apply(Object arg, Forest results) {
+	public Object apply(Object arg, ForestWriter results) {
 		env.put(var, arg);
 		return body.evaluate(env, inputs, results);
 	}

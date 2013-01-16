@@ -3,10 +3,10 @@ package batch.sql.syntax;
 import java.util.List;
 
 import batch.sql.schema.ISchema;
-import batch.syntax.Expression;
-import batch.util.Forest;
+import batch.util.BatchFactory;
+import batch.util.ForestReader;
 
-public interface SQLTranslation extends Expression {
+public interface SQLTranslation {
 	public enum NormType {
 		NORMAL, PARENT, EXTERNAL
 	}
@@ -15,6 +15,8 @@ public interface SQLTranslation extends Expression {
 		NONE, VALUE, SELECT, INSERT, UPDATE, DELETE
 	}
 
+	public abstract void setValue();
+	
 	public abstract SQLTable getTable();
 
 	public abstract SQLTranslation invertPath(SQLTranslation inverted, Env env,
@@ -23,7 +25,7 @@ public interface SQLTranslation extends Expression {
 	public abstract SQLTranslation normalize(ISchema schema, SQLQuery query,
 			SQLTranslation outerCond, Env env, NormType normType);
 
-	public abstract void toSQL(StringBuilder sb, List<Object> params, Forest data);
+	public abstract void toSQL(StringBuilder sb, List<Object> params, ForestReader data);
 
 	public abstract SQLTable getTableNoJoins(Env env);
 
@@ -41,4 +43,5 @@ public interface SQLTranslation extends Expression {
 	public abstract SQLTranslation dot(String field, ISchema schema,
 			SQLQuery query, Env env, NormType normType);
 
+  public abstract <E> E run(BatchFactory<E> f);
 }

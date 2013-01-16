@@ -7,7 +7,7 @@ import java.util.List;
 
 import batch.sql.schema.ISchema;
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 /**
  * A Named exp indicates that the result of evaluating the inner
@@ -22,6 +22,7 @@ public class Output extends ValueExpression {
 		super();
 		this.location = location;
 		this.exp = expr;
+		expr.setValue();
 	}
 
 	public <E> E run(BatchFactory<E> f) {
@@ -53,7 +54,7 @@ public class Output extends ValueExpression {
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		SQLTranslation out = exp;
 
 		// TODO: how do I get the type of a fiel???

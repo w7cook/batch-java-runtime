@@ -39,6 +39,7 @@ import batch.sql.syntax.Output;
 import batch.sql.syntax.SQLQuery;
 import batch.sql.syntax.SQLTranslation.SQLAction;
 import batch.util.Forest;
+import batch.util.ForestReader;
 import batch.util.MultiForest;
 
 public class JDBC<T> extends SQLBatch<T> {
@@ -58,7 +59,7 @@ public class JDBC<T> extends SQLBatch<T> {
 		conn = DriverManager.getConnection(url);
 	}
 
-	private void runQueries(SQLQuery q, Forest data, Forest results,
+	private void runQueries(SQLQuery q, ForestReader data, Forest results,
 			String outerKey, MultiForest outerResults) throws SQLException {
 		SQLAction action = q.getAction();
 		switch (action) {
@@ -79,24 +80,25 @@ public class JDBC<T> extends SQLBatch<T> {
 		}
 	}
 
-	private void executeAndDecodeResults(SQLQuery q, Forest data, Forest results,
+	private void executeAndDecodeResults(SQLQuery q, ForestReader data, Forest results,
 			String outerKey, MultiForest outerResults) throws SQLException {
 		ResultSet qr = null;
 		try {
 			boolean singleRow = q.isSingleRow();
 			// set up outer result iterator
-			Iterator<Forest> iter = null;
-			Forest outer = null;
+      Iterator<Forest> iter = null;
+      Forest outer = null;
 			MultiForest myResults = null;
-			if (!singleRow)
+			if (!singleRow) {
 				if (outerResults != null) {
-					iter = outerResults.iterator();
+				  iter = outerResults.forestIterator();
 					if (!iter.hasNext())
 						return;
 					outer = iter.next();
-					myResults = outer.newCollection(q.getVar());
+					myResults = outer.newForestIteration(q.getVar());
 				} else
-					myResults = results.newCollection(q.getVar());
+					myResults = results.newForestIteration(q.getVar());
+			}
 			// execute the query, prepared or not
 			if (q.getAction() == SQLAction.INSERT)
 				qr = executeUpdate(q, data, true);
@@ -109,7 +111,7 @@ public class JDBC<T> extends SQLBatch<T> {
 					while (iter.hasNext()
 							&& !outer.get(outerKey).equals(qr.getObject("parent"))) {
 						outer = iter.next();
-						myResults = outer.newCollection(q.getVar());
+						myResults = outer.newForestIteration(q.getVar());
 					}
 				// decode the columns
 				Forest row = singleRow ? results : myResults.newIteration();
@@ -124,7 +126,7 @@ public class JDBC<T> extends SQLBatch<T> {
 			// fill in any remaining parent results with null
 			if (iter != null)
 				while (iter.hasNext())
-					iter.next().newCollection(q.getVar());
+					iter.next().newTable(q.getVar());
 			if (singleRow)
 				for (SQLQuery sub : q.getSubqueries())
 					runQueries(sub, data, results, q.getSubTag(), null);
@@ -138,7 +140,7 @@ public class JDBC<T> extends SQLBatch<T> {
 		}
 	}
 
-	private ResultSet executeQuery(SQLQuery q, Forest data) throws SQLException {
+	private ResultSet executeQuery(SQLQuery q, ForestReader data) throws SQLException {
 		ResultSet qr;
 		if (!usePrepared) {
 			String sql = getSQL(q, null, data);
@@ -155,7 +157,7 @@ public class JDBC<T> extends SQLBatch<T> {
 		return qr;
 	}
 
-	private ResultSet executeUpdate(SQLQuery q, Forest data, boolean returnKeys)
+	private ResultSet executeUpdate(SQLQuery q, ForestReader data, boolean returnKeys)
 			throws SQLException {
 		int num;
 		ResultSet result = null;
@@ -181,12 +183,10 @@ public class JDBC<T> extends SQLBatch<T> {
 	}
 
 	@Override
-	public Forest invokeDatabase(SQLQuery rootQuery, Forest data) {
-		Forest results = null;
+	public void invokeDatabase(SQLQuery rootQuery, ForestReader data, Forest results) {
 		try {
 			if (!usePrepared)
 				stmt = conn.createStatement();
-			results = new Forest();
 			runQueries(rootQuery, data, results, null, null);
 		} catch (SQLException ex) {
 			// handle any errors
@@ -208,7 +208,6 @@ public class JDBC<T> extends SQLBatch<T> {
 				stmt = null;
 			}
 		}
-		return results;
 	}
 
 	@Override

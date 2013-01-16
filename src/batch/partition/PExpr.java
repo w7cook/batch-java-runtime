@@ -42,4 +42,5 @@ public interface PExpr extends ExtraInfo<PExpr> {
 
 	public <E> E runExtra(PartitionFactory<E> f);
 
+	public void setValue();
 }

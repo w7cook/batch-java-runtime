@@ -3,9 +3,10 @@ package batch.syntax;
 import java.util.Map;
 
 import batch.util.BatchCancel;
-import batch.util.Forest;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public abstract class Evaluate {
-	abstract public Object evaluate(Map<String, Object> env, Forest inputs,
-			Forest results) throws BatchCancel;
+	abstract public Object evaluate(Map<String, Object> env, ForestReader inputs,
+			ForestWriter results) throws BatchCancel;
 }

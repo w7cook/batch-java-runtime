@@ -13,7 +13,7 @@ import batch.util.Forest;
 public class XMLTransport implements
 		BatchTransport {
 
-	public void write(Forest data, Writer out) throws IOException {
+	public Forest writer(Writer out) throws IOException {
 		XMLWriter dumper = new XMLWriter(out, false);
 		data.dump(dumper, null);
 		dumper.finish();
@@ -21,7 +21,7 @@ public class XMLTransport implements
 
 	@Override
 	public Forest read(Reader in) throws IOException {
-		XMLReader<Forest> reader = new XMLReader<Forest>(Forest.dynamicFactory, false);
+		XMLReader<Forest> reader = new XMLReader<Forest>(Forest.dynamicFactory, true);
 		return reader.read(in);
 	}
 

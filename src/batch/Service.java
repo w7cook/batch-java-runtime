@@ -24,8 +24,12 @@
  ******************************************************************************/
 package batch;
 
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
+
 public interface Service<E, I> extends batch.util.BatchFactory<E>, Iterable<I> {
 
-	public batch.util.Forest execute(E exp, batch.util.Forest in);
-	
+	public void executeServer(E exp, ForestReader in, ForestWriter out);
+
+	public ForestReader execute(E exp, ForestReader in);
 }

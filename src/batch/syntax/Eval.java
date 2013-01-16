@@ -16,8 +16,9 @@ import batch.Op;
 import batch.util.BatchCancel;
 import batch.util.BatchException;
 import batch.util.BatchFactoryHelper;
-import batch.util.Forest;
-import batch.util.MultiForest;
+import batch.util.ForestListWriter;
+import batch.util.ForestReader;
+import batch.util.ForestWriter;
 
 public class Eval extends BatchFactoryHelper<Evaluate> {
 
@@ -46,8 +47,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Var(final String name) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				return env.get(name);
 			}
 		};
@@ -56,8 +57,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Data(final Object value) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				return value;
 			}
 		};
@@ -66,8 +67,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Fun(final String var, final Evaluate body) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				Map<String, Object> nenv = new HashMap<String, Object>();
 				nenv.putAll(env);
 				return new FunClosure<Evaluate>(var, body, nenv, inputs);
@@ -78,8 +79,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Prim(final Op op, final List<Evaluate> args) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 
 				boolean isDouble = false;
 				double doubleValue = 0;
@@ -219,8 +220,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 					return intValue;
 			}
 
-			private boolean doOp(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			private boolean doOp(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				Object left = args.get(0).evaluate(env, inputs, results);
 				Object right = args.get(1).evaluate(env, inputs, results);
 				// largest must come first!!
@@ -333,8 +334,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Prop(final Evaluate base, final String field) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 
 				final Object val = base.evaluate(env, inputs, results);
 				Class<?> cls = val.getClass();
@@ -361,8 +362,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	public Evaluate Assign(final Evaluate target,
 			final Evaluate source) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				// TODO: revisit this
 				throw new Error("TODO!");
 			}
@@ -373,8 +374,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	public Evaluate Let(final String var, final Evaluate expression,
 			final Evaluate body) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 
 				final Object val = expression.evaluate(env, inputs, results);
 
@@ -392,8 +393,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	public Evaluate If(final Evaluate condition, final Evaluate thenExp,
 			final Evaluate elseExp) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				final boolean cond = (Boolean) condition.evaluate(env, inputs, results);
 				Object val = null;
 				if (cond) {
@@ -410,10 +411,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	public Evaluate Loop(final String var, final Evaluate collection,
 			final Evaluate body) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
-
-				final MultiForest itr = results.newCollection(var);
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 
 				// Execute Loop
 				Iterable<?> coll;
@@ -425,14 +424,15 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 				  coll = new ArrayIterator(colOrArray);
 				}
 				
+        ForestListWriter iter = results.newTable(var);
 				for (Object o : coll) {
 					// set the loop variable to the current value in the environment
 					env.put(var, o);
 					// create a new loop iteration
-					final Forest forest = itr.newIteration();
 					// evaluate the body
-					body.evaluate(env, inputs, forest);
+					body.evaluate(env, inputs, iter.newIteration());
 				}
+				iter.complete();
 
 				// remove the loop variable from the environment
 				env.remove(var);
@@ -447,8 +447,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 			final List<Evaluate> args) {
 		return new Evaluate() {
 			@SuppressWarnings("unchecked")
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 
 				// Evaluate receiver and parameters
 				Object receiver = target.evaluate(env, inputs, results); // dynamic ?
@@ -535,8 +535,8 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate In(final String location) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				Object val = inputs.get(location);
 				if (val instanceof Throwable)
 					throw new Error(((Throwable) val).getMessage());
@@ -548,18 +548,17 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 	@Override
 	public Evaluate Out(final String location, final Evaluate expression) {
 		return new Evaluate() {
-			public Object evaluate(Map<String, Object> env, Forest inputs,
-					Forest results) {
-				Object result;
+			public Object evaluate(Map<String, Object> env, ForestReader inputs,
+					ForestWriter results) {
 				try {
-					result = expression.evaluate(env, inputs, results);
+				  Object result = expression.evaluate(env, inputs, results);
 					results.put(location, result);
+	        return result;
 				} catch (BatchException e) {
 					// these are actual exceptions from scripts
 					results.put(location, e);
 					throw new BatchCancel(); // end the batch
 				}
-				return result;
 			}
 		};
 	}

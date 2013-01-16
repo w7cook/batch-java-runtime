@@ -17,8 +17,15 @@ public class Let extends Base {
 		this.var = var;
 		this.exp = expression;
 		this.body = body;
+		exp.setValue();
 	}
-	
+
+  public void setValue() {
+    super.setValue();
+    body.setValue();
+  }
+
+
 	public <E> E run(BatchFactory<E> f) {
 		return f.Let(var, exp.run(f), body.run(f));
 	}
@@ -34,6 +41,15 @@ public class Let extends Base {
 		// if (exp instanceof Loop)
 		// exp = ((Loop)exp).getBody();
 		Env nenv = new Env(var, newexp, env);
+		if (newexp instanceof SQLQuery) {
+		  query = (SQLQuery)newexp;
+		  query.isValue = false;
+		  query.singleRow = true;
+		}
+		else
+	    query = newexp.getTable().getQuery();
+
+		// WHAT TO DO!!!
 		return body.normalize(schema, query, outerCond, nenv, normType);
 	}
 

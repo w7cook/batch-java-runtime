@@ -6,129 +6,286 @@ package batch.json;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Iterator;
 
 import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 
 import batch.DataType;
-import batch.ExpressionReader;
-import batch.util.DynamicFactory;
-import batch.util.ExpressionBuilder;
-import batch.util.Forest;
+import batch.util.ForestReader;
 import batch.util.TransportHelper;
 
 /*
 
 
  */
-public class JSONReader extends TransportHelper implements ExpressionReader<Forest> {
+public class JSONReader extends TransportHelper implements ForestReader {
 
-	JsonFactory jsonFactory;
-	JsonParser jp;
-	DynamicFactory<Forest> factory;
+  JsonParser jp;
 
-	public JSONReader(DynamicFactory<Forest> factory) throws IOException {
-		jsonFactory = new JsonFactory();
-		this.factory = factory;
-	}
+  public JSONReader(Reader in) throws IOException {
+    BufferedReader buf = new BufferedReader(in);
+    String header = buf.readLine();
 
-	@Override
-	public Forest read(Reader in) throws IOException {
-		BufferedReader inb = new BufferedReader(in);
-		String header = inb.readLine();
-		return read(header, inb);
-	}
+    if (!header.toLowerCase().equals("batch 1.0 json 1.0"))
+      throw new Error("BAD FORMAT");
+    JsonFactory jsonFactory;
+    jsonFactory = new JsonFactory();
+    jp = jsonFactory.createJsonParser(buf);
+    check(JsonToken.START_OBJECT);
+  }
 
-	private void check(JsonToken expected) throws IOException {
-		JsonToken next = jp.nextToken();
-		if (next != expected)
-			throw new Error("EXPECTED OBJECT START");
-	}
+  private void check(JsonToken expected) {
+    JsonToken next;
+    try {
+      next = jp.nextToken();
+    } catch (Exception e) {
+      throw new Error("JSON Parser Error");
+    }
+    if (next != expected)
+      throw new Error("EXPECTED " + expected.asString() + " FOUND "
+          + next.asString());
+  }
 
-	@Override
-	public Forest read(String header, Reader in) throws IOException {
-		if (!header.toLowerCase().equals("batch 1.0 json 1.0"))
-			throw new Error("BAD FORMAT");
-		jp = jsonFactory.createJsonParser(in);
-		check(JsonToken.START_OBJECT);
-		return readObject(null, null);
-	}
+  public Object get(String request) {
+    check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
+    // encountered as a field name (same lexical
+    // value, different function)
+    try {
+      String field = jp.getCurrentName();
+      if (!field.equals(request))
+        throw new Error("Mismatched field: " + request + " expected but found "
+            + field);
+      JsonToken token = jp.nextToken();
+      switch (token) {
+      case VALUE_NULL: // VALUE_TRUE is returned when encountering literal
+        // "true" in value context
+        return null;
+      case VALUE_TRUE: // VALUE_TRUE is returned when encountering literal
+        // "true" in value context
+        return true;
+      case VALUE_FALSE: // VALUE_FALSE is returned when encountering
+        // literal "false" in value context
+        return false;
+      case VALUE_NUMBER_FLOAT: // VALUE_NUMBER_INT is returned when a
+        // numeric token other that is not an
+        // integer is encountered: that is, a
+        // number that does have floating point
+        // or exponent marker in it, in addition
+        // to one or more digits.
+        return jp.getDoubleValue();
+      case VALUE_NUMBER_INT: // VALUE_NUMBER_INT is returned when an
+        // integer numeric token is encountered in
+        // value context: that is, a number that
+        // does not have floating point or exponent
+        // marker in it (consists only of an
+        // optional sign, followed by one or more
+        // digits)
+        return jp.getLongValue();
+      case VALUE_STRING: // VALUE_STRING is returned when a String token
+        // is encountered in value context (array
+        // element, field value, or root-level
+        // stand-alone value)
+        return jp.getText();
+      case START_OBJECT:
+        check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
+        // encountered as a field name (same lexical
+        // value, different function)
+        field = jp.getCurrentName();
+        if (field.charAt(0) == '*') {
+          DataType type = DataType.fromString(field.substring(1));
+          if (type != null) {
+            check(JsonToken.VALUE_STRING);
+            String data = jp.getText();
+            check(JsonToken.END_OBJECT);
+            return loadData(type, data);
+          } else
+            throw new Error("Unkonwn type: " + field);
+        }
 
-	private Forest readObject(ExpressionBuilder<Forest> parent, String parentField) throws IOException {
-		JsonToken token;
-		String field = null;
-		ExpressionBuilder<Forest> builder = null;
-		while ((token = jp.nextToken()) != JsonToken.END_OBJECT) {
-			switch (token) {
-			case START_OBJECT: // START_OBJECT is returned when encountering '{'
-				// which signals starting of an Object value.
-				readObject(builder, field);
-				break;
-			case FIELD_NAME: // FIELD_NAME is returned when a String token is
-				// encountered as a field name (same lexical
-				// value, different function)
-				field = jp.getCurrentName();
-				if (builder == null) {
-					if (field.charAt(0) == '*') {
-						DataType type = DataType.fromString(field.substring(1));
-						if (type != null) {
-							check(JsonToken.VALUE_STRING);
-							String data = jp.getText();
-							check(JsonToken.END_OBJECT);
-							parent.putField(parentField, loadData(type, data));
-							return null;
-						}
-						else
-							throw new IOException("Unkonwn type: " + field);
-					}
-					else
-						builder = factory.make(field);
-				}
+      default:
+        throw new Error("JSON Parser Error");
+      }
+    } catch (JsonParseException e) {
+      throw new Error("JSON Parser Error");
+    } catch (IOException e) {
+      throw new Error("JSON Parser Error");
+    }
+  }
 
-				break;
-			case VALUE_NULL: // VALUE_TRUE is returned when encountering literal
-				// "true" in value context
-				builder.putField(field, null);
-				break;
-			case VALUE_TRUE: // VALUE_TRUE is returned when encountering literal
-				// "true" in value context
-				builder.putField(field, true);
-				break;
-			case VALUE_FALSE: // VALUE_FALSE is returned when encountering
-				// literal "false" in value context
-				builder.putField(field, false);
-				break;
-			case VALUE_NUMBER_FLOAT: // VALUE_NUMBER_INT is returned when a
-				// numeric token other that is not an
-				// integer is encountered: that is, a
-				// number that does have floating point
-				// or exponent marker in it, in addition
-				// to one or more digits.
-				builder.putField(field, jp.getDoubleValue());
-				break;
-			case VALUE_NUMBER_INT: // VALUE_NUMBER_INT is returned when an
-				// integer numeric token is encountered in
-				// value context: that is, a number that
-				// does not have floating point or exponent
-				// marker in it (consists only of an
-				// optional sign, followed by one or more
-				// digits)
-				builder.putField(field, jp.getLongValue());
-				break;
-			case VALUE_STRING: // VALUE_STRING is returned when a String token
-				// is encountered in value context (array
-				// element, field value, or root-level
-				// stand-alone value)
-				builder.putField(field, jp.getText());
-				break;
-			}
-		}
-		if (builder == null)
-			builder = factory.make(null);
-		Forest obj = builder.complete();
-		if (parent != null)
-			parent.putElement(parentField, obj);
-		return obj;
-	}
+  @Override
+  public int getByte(String field) {
+    return (Byte) get(field);
+  }
+
+  @Override
+  public short getShort(String field) {
+    return (Short) get(field);
+  }
+
+  @Override
+  public int getInteger(String field) {
+    return (Integer) get(field);
+  }
+
+  @Override
+  public long getLong(String field) {
+    return (Long) get(field);
+  }
+
+  @Override
+  public double getDouble(String field) {
+    return (Double) get(field);
+  }
+
+  @Override
+  public float getFloat(String field) {
+    return (Float) get(field);
+  }
+
+  @Override
+  public BigDecimal getBigDecimal(String field) {
+    return (BigDecimal) get(field);
+  }
+
+  @Override
+  public String getString(String field) {
+    return get(field).toString();
+  }
+
+  @Override
+  public char getCharacter(String field) {
+    return (Character) get(field);
+  }
+
+  @Override
+  public boolean getBoolean(String field) {
+    return (Boolean) get(field);
+  }
+
+  @Override
+  public Date getDate(String field) {
+    return (Date) get(field);
+  }
+
+  @Override
+  public java.util.Date getUtilDate(String field) {
+    return (java.util.Date) get(field);
+  }
+
+  @Override
+  public Time getTime(String field) {
+    return (Time) get(field);
+  }
+
+  @Override
+  public Timestamp getTimestamp(String field) {
+    return (Timestamp) get(field);
+  }
+
+  @Override
+  public byte[] getRawData(String field) {
+    return (byte[]) get(field);
+  }
+
+  class ListReader implements Iterable<ForestReader> {
+    JsonParser jp;
+    JSONReader reader;
+
+    public ListReader(JsonParser jp, JSONReader reader) {
+      super();
+      this.jp = jp;
+      this.reader = reader;
+    }
+
+    @Override
+    public Iterator<ForestReader> iterator() {
+      return new ReadIterator(jp, reader);
+    }
+
+    class ReadIterator implements Iterator<ForestReader> {
+      JsonParser jp;
+      private boolean hasNext;
+      JSONReader reader;
+
+      public ReadIterator(JsonParser jp, JSONReader reader) {
+        super();
+        this.jp = jp;
+        this.reader = reader;
+        peek();
+      }
+
+      private void peek() {
+        while (true)
+          try {
+            switch (jp.nextToken()) {
+            case END_OBJECT:
+              break; // continue
+            case START_OBJECT:
+              hasNext = true;
+              return;
+            case END_ARRAY:
+              hasNext = false;
+              return;
+            default:
+              throw new Error("JSON Reader error");
+            }
+          } catch (JsonParseException e) {
+            throw new Error("JSON Reader error");
+          } catch (IOException e) {
+            throw new Error("JSON Reader error");
+          }
+      }
+
+      @Override
+      public boolean hasNext() {
+        return hasNext;
+      }
+
+      @Override
+      public ForestReader next() {
+        return reader;
+      }
+
+      @Override
+      public void remove() {
+        throw new Error("CAN'T REMOVE from JSON Reader");
+      }
+    }
+  }
+
+  @Override
+  public Iterable<ForestReader> getTable(String request) {
+    try {
+      check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
+      // encountered as a field name (same lexical
+      // value, different function)
+      String field;
+      field = jp.getCurrentName();
+      if (!field.equals(request))
+        throw new Error("Mismatched field: " + request + " expected but found "
+            + field);
+      check(JsonToken.START_ARRAY);
+      return new ListReader(jp, this);
+    } catch (JsonParseException e) {
+      throw new Error("JSON Reader error");
+    } catch (IOException e) {
+      throw new Error("JSON Reader error");
+    }
+  }
+
+  @Override
+  public void complete() {
+    try {
+      jp.close();
+    } catch (IOException e) {
+      throw new Error("JSON Reader error");
+    }
+  }
 }

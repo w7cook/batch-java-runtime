@@ -9,9 +9,9 @@ import java.util.List;
 import batch.sql.schema.IEntityType;
 import batch.sql.schema.ISchema;
 import batch.sql.schema.javareflect.Schema;
-import batch.syntax.Expression;
+import batch.sql.syntax.SQLTranslation.SQLAction;
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public class Call extends ValueExpression {
 
@@ -27,6 +27,9 @@ public class Call extends ValueExpression {
 		this.target = target;
 		this.method = method;
 		this.args = args;
+		target.setValue();
+		for (SQLTranslation s : args)
+		  s.setValue();
 	}
 
 	@Override
@@ -67,6 +70,14 @@ public class Call extends ValueExpression {
 					normType);
 			query.doAction(SQLAction.DELETE, newtarget);
 			return Factory.factory.Skip();
+    } else if (method.equals("project")) {
+      SQLTranslation newtarget = target.normalize(schema, query, null, env,
+          normType);
+      Fun fun = (Fun) args.get(0);
+      SQLTranslation item = newtarget.getTable();
+      SQLTranslation result = fun.apply(item).normalize(schema, query, null,
+          env, normType);
+      return result;
 		} else
 			return doCall(schema, query, env, target, normType);
 	}
@@ -77,10 +88,9 @@ public class Call extends ValueExpression {
 		if (targetIn != target) {
 			// methods that require a target
 			target = targetIn.normalize(schema, query, null, env, normType);
-			if (method.equals("orderBy")) {
+			boolean asc;
+			if ((asc = method.equals("orderBy")) || method.equals("orderByDescending")) {
 				Fun fun = (Fun) args.get(0);
-				boolean asc = ((Boolean) args.get(1).run(new batch.syntax.Eval())
-						.evaluate(null, null, null)).booleanValue();
 				SQLTranslation item = target.getTable();
 				SQLTranslation order = fun.apply(item).normalize(schema, query, null,
 						env, normType);
@@ -99,9 +109,9 @@ public class Call extends ValueExpression {
 				query.setDistinct();
 				return target;
 			} else if (method.equals("first")) {
-				long asc = ((Number) args.get(0).run(new batch.syntax.Eval())
+				long limit = ((Number) args.get(0).run(new batch.syntax.Eval())
 						.evaluate(null, null, null)).longValue();
-				query.setLimit(asc);
+				query.setLimit(limit);
 				return target;
 			}
 		}
@@ -146,7 +156,7 @@ public class Call extends ValueExpression {
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		sb.append(method);
 		sb.append('(');
 		int i = 0;
@@ -169,9 +179,10 @@ public class Call extends ValueExpression {
 		return target.getTable();
 	}
 
+	@Override
 	public <E> E run(BatchFactory<E> f) {
 		List<E> trans = new ArrayList<E>();
-		for (Expression x : args)
+		for (SQLTranslation x : args)
 			trans.add(x.run(f));
 		return f.Call(target.run(f), method, trans);
 	}

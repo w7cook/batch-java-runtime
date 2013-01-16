@@ -14,7 +14,6 @@ public class Loop extends Base {
 	SQLTranslation collection;
 	SQLTranslation body;
 	SQLTranslation testId; // ID for testing
-	boolean isValue;
 
 	public Loop(String var, SQLTranslation collection, SQLTranslation body) {
 		super();
@@ -22,8 +21,14 @@ public class Loop extends Base {
 		this.collection = collection;
 		this.body = body;
 		op = Op.SEQ;
+		collection.setValue();
 	}
 	
+  public void setValue() {
+    super.setValue();
+    body.setValue();
+  }
+
 	public Loop setOp(Op op) {
 		this.op = op;
 		return this;
@@ -163,7 +168,7 @@ public class Loop extends Base {
 			} else
 				query.setTables(table.getRealTable());
 			nenv = new Env(var, table, env);
-			if (!isValue && getAggOp() == null)
+//			if (!isValue && getAggOp() == null)
 				env.getRootQuery().addSubquery(query, null);
 		}
 		query.env = nenv;
@@ -184,8 +189,6 @@ public class Loop extends Base {
 
 	public void setId(SQLTranslation id) {
 		testId = id;
-		isValue = true;
-		// setSingleRow();
 	}
 
 	public SQLTranslation getBody() {

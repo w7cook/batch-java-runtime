@@ -6,7 +6,7 @@ package batch.sql.syntax;
 import java.util.List;
 
 import batch.util.BatchFactory;
-import batch.util.Forest;
+import batch.util.ForestReader;
 
 public class Constant extends ValueExpression {
 
@@ -14,10 +14,11 @@ public class Constant extends ValueExpression {
 
 	public Constant(Object value) {
 		this.value = value;
+		setValue();
 	}
 
 	@Override
-	public void toSQL(StringBuilder sb, List<Object> params, Forest data) {
+	public void toSQL(StringBuilder sb, List<Object> params, ForestReader data) {
 		if (value == null) {
 			sb.append("NULL");
 		} else if (value instanceof String) {

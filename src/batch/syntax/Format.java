@@ -24,8 +24,10 @@ public class Format extends BatchFactoryHelper<String> {
     } else if (value instanceof java.sql.Date
         || value instanceof java.util.Date) {
       return "date(\"" + value.toString() + "\")";
-    } else
+    } else if (value instanceof Boolean || value instanceof Number) {
       return value.toString();
+    } else
+      return "{" + value.toString() + "}";
   }
 
   @Override
@@ -85,8 +87,7 @@ public class Format extends BatchFactoryHelper<String> {
     if (elseExp.equals("skip"))
       return "if (" + condition + ") {" + thenExp + "}";
     else
-      return "if (" + condition + ") {" + thenExp + "} else {" + elseExp
-          + "}";
+      return "if (" + condition + ") {" + thenExp + "} else {" + elseExp + "}";
   }
 
   @Override
@@ -116,4 +117,10 @@ public class Format extends BatchFactoryHelper<String> {
     return "OUTPUT(\"" + location + "\", " + expression + ")";
   }
 
+  public static void checkData(Object value) {
+    if (value != null
+        && !(value instanceof String || value instanceof java.sql.Date
+            || value instanceof java.util.Date || value instanceof Boolean || value instanceof Number))
+      throw new Error("Invalid Data");
+  }
 }
