@@ -56,6 +56,7 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
         json.writeStringField("*" + type.toString(), storeData(type, value));
         json.writeEndObject();
       }
+      json.flush();
     } catch (IOException e) {
       throw new Error("JSON WRITER ERROR!");
     }
@@ -74,9 +75,11 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
     @Override
     public ForestWriter newIteration() {
       try {
-//        if (count++ > 0)
-//          json.writeEndObject();
+        if (count++ > 0) {
+          json.writeEndObject();
+        }
         json.writeStartObject();
+        json.flush();
         return jsonWriter;
       } catch (IOException e) {
         throw new Error("JSON WRITER ERROR!");
@@ -85,7 +88,11 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
 
     public void complete() {
       try {
+        if (count > 0) {
+          json.writeEndObject();
+        }
         json.writeEndArray();
+        json.flush();
       } catch (IOException e) {
         throw new Error("JSON WRITER ERROR!");
       }
@@ -96,6 +103,7 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
   public ForestListWriter newTable(String field) {
     try {
       json.writeArrayFieldStart(field);
+      json.flush();
       return new ListWriter(json, this);
     } catch (IOException e) {
       throw new Error("JSON WRITER ERROR!");

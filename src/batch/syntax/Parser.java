@@ -344,9 +344,9 @@ public class Parser<E> {
             e = expr();
             args.add(e);
           }
-          match(Symbol.RPAREN);
-          value = f.Call(value, field, args);
         }
+        match(Symbol.RPAREN);
+        value = f.Call(value, field, args);
       } else
         value = f.Prop(value, field);
     }

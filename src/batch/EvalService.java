@@ -71,6 +71,7 @@ public class EvalService<I> extends Eval implements Service<Evaluate, I> {
 
     try {
       exp.evaluate(env, in, result);
+      result.complete();
     } catch (BatchCancel e) {
     }
 

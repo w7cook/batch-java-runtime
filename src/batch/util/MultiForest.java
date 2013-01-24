@@ -82,6 +82,7 @@ public class MultiForest implements Iterable<ForestReader>, ForestListWriter {
   public void copyTo(ForestListWriter list) {
     for (Forest f : iterations)
       f.copyTo(list.newIteration());
+    list.complete();
   }
 
 }
