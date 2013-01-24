@@ -68,7 +68,12 @@ public class Call extends ValueExpression {
 		} else if (method.equals("delete")) {
 			SQLTranslation newtarget = target.normalize(schema, query, null, env,
 					normType);
-			query.doAction(SQLAction.DELETE, newtarget);
+			if (newtarget instanceof SQLQuery) {
+			  SQLQuery q = (SQLQuery)newtarget;
+        q.doAction(SQLAction.DELETE, q.body);
+			}
+			else
+			  query.doAction(SQLAction.DELETE, newtarget);
 			return Factory.factory.Skip();
     } else if (method.equals("project")) {
       SQLTranslation newtarget = target.normalize(schema, query, null, env,

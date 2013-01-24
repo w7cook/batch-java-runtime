@@ -325,12 +325,9 @@ public class SQLQuery extends Base {
   }
 
   public void doAction(SQLAction kind, SQLTranslation table) {
-    if (kind == SQLAction.INSERT && sqlAction == SQLAction.SELECT)
-      sqlAction = SQLAction.INSERT;
-    else if (sqlAction == SQLAction.NONE) {
+    if (sqlAction == SQLAction.NONE || sqlAction == SQLAction.SELECT || sqlAction == SQLAction.VALUE)
       sqlAction = kind;
-    } else if (sqlAction == SQLAction.INSERT ? kind != SQLAction.SELECT
-        : sqlAction != kind)
+    else if (kind != sqlAction)
       throw new Error("Combined actions");
     if (actions == null)
       actions = new ArrayList<SQLTranslation>();

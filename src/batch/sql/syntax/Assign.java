@@ -26,8 +26,16 @@ public class Assign extends Base {
       SQLTranslation outerCond, Env env, NormType normType) {
     SQLTranslation targ = target.normalize(schema, query, null, env, normType);
     SQLTranslation src = source.normalize(schema, query, null, env, normType);
-    Assign newAction = new Assign(targ, src);
-    targ.getTable().getQuery().doAction(SQLAction.UPDATE, newAction);
+    SQLQuery q;
+    Assign newAction;
+    if (targ instanceof SQLQuery) {
+      q = (SQLQuery) targ;
+      newAction = new Assign(q.body, src);
+    } else {
+      newAction = new Assign(targ, src);
+      q = targ.getTable().getQuery();
+    }
+    q.doAction(SQLAction.UPDATE, newAction);
     return this;
   }
 
