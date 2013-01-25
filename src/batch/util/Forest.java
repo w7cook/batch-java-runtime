@@ -239,6 +239,7 @@ public class Forest implements ForestReader, ForestWriter {
       out.put(e.getKey(), e.getValue());
     for (Map.Entry<String, MultiForest> e : iterations.entrySet())
       e.getValue().copyTo( out.newTable(e.getKey()));
+    out.complete();
   }
 
 }
