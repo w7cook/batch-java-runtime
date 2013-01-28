@@ -72,11 +72,6 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
       out2.copyTo(out);
 	}
 
-	private void copyForest(ForestReader temp, ForestWriter out) {
-    // TODO Auto-generated method stub
-    
-  }
-
   public SQLQuery setupQueries(SQLTranslation exp) {
 		rootQuery = new SQLQuery(true);
 		Env env = new Env(rootQuery);

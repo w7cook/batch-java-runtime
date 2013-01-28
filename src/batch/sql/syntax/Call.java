@@ -9,7 +9,6 @@ import java.util.List;
 import batch.sql.schema.IEntityType;
 import batch.sql.schema.ISchema;
 import batch.sql.schema.javareflect.Schema;
-import batch.sql.syntax.SQLTranslation.SQLAction;
 import batch.util.BatchFactory;
 import batch.util.ForestReader;
 
