@@ -53,26 +53,18 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		this.schema = new Schema(rootClass);
 	}
 
-  public ForestReader execute(SQLTranslation exp, ForestReader in) {
-    Forest out = new Forest();
-    executeServer(exp, in, out);
-    return out;
-  }
-
-  public void executeServer(SQLTranslation exp, ForestReader in, ForestWriter out) {
-		// For now, we have to execute the full thing, then copy the results!
-    // instead we need to read asynchronously from all the queries at the same
-    // time, to be able to stream results!
-    Forest out2 = out instanceof Forest ? (Forest)out : new Forest();
-    batch.sql.syntax.SQLTable.tagNum = 1;
-    System.err.println(exp.toString());
-    invokeDatabase(setupQueries(exp), in, out2);
-    System.out.println( out.toString() );
-    if (out != out2)
-      out2.copyTo(out);
+	public ForestReader execute(SQLTranslation exp, ForestReader in) {
+		System.err.println(exp.toString());
+		return createStream(setupQueries(exp), in);
 	}
 
-  public SQLQuery setupQueries(SQLTranslation exp) {
+	public void executeServer(SQLTranslation exp, ForestReader in, ForestWriter out) {
+		execute(exp, in)
+			.copyTo(out);
+		System.out.println( out.toString() );
+	}
+
+	private SQLQuery setupQueries(SQLTranslation exp) {
 		rootQuery = new SQLQuery(true);
 		Env env = new Env(rootQuery);
 		doQueries(exp, env);
@@ -89,7 +81,7 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		}
 	}
 
-	protected String getSQL(SQLQuery q, List<Object> params, ForestReader data) {
+	protected static String getSQL(SQLQuery q, List<Object> params, ForestReader data) {
 		StringBuilder sb = new StringBuilder();
 		q.toSQL(sb, params, data);
 		String sql = sb.toString();
@@ -97,10 +89,11 @@ public class SQLBatch<T> extends batch.sql.syntax.Factory implements Service<SQL
 		return sql;
 	}
 
-	protected void invokeDatabase(SQLQuery q, ForestReader data, Forest results) {
+	protected ForestReader createStream(SQLQuery q, ForestReader data) {
 		getSQL(q, null, data);
 		for (SQLQuery sub : q.getSubqueries())
-			invokeDatabase(sub, data, results);
+			createStream(sub, data);
+		return new Forest();
 	}
 
 	public Iterator<T> iterator() {
