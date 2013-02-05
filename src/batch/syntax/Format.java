@@ -32,7 +32,7 @@ public class Format extends BatchFactoryHelper<String> {
 
   @Override
   public String Fun(String var, String body) {
-    return "function(" + var + ")" + body;
+    return "function(" + var + ") {" + body + "}";
   }
 
   @Override
