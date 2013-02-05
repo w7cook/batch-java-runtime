@@ -153,7 +153,7 @@ public class Parser<E> {
       require(Symbol.IN);
       E e = expr();
       require(Symbol.RPAREN);
-      E b = block();
+      E b = base();
       return f.Loop(v, e, b);
     } else if (match(Symbol.VAR)) {
       String v = ID();
@@ -262,7 +262,7 @@ public class Parser<E> {
       next();
       e = expr();
       require(Symbol.RPAREN);
-      return e;
+      return access(e);
     }
     case STRING: {
       String str = (String) data;
@@ -277,7 +277,7 @@ public class Parser<E> {
       require(Symbol.LPAREN);
       String v = ID();
       require(Symbol.RPAREN);
-      e = block();
+      e = base();
       return f.Fun(v, e);
     }
     case IF: {
@@ -285,9 +285,9 @@ public class Parser<E> {
       require(Symbol.LPAREN);
       E a = expr();
       require(Symbol.RPAREN);
-      E b = block();
+      E b = base();
       if (match(Symbol.ELSE)) {
-        E c = block();
+        E c = base();
         return f.If(a, b, c);
       }
       return f.If(a, b, f.Skip());
@@ -305,6 +305,8 @@ public class Parser<E> {
     case FALSE:
       next();
       return f.Data(false);
+    case LCURLY:
+      return access(block());
     default: {
       E a = prim();
       if (match(Symbol.ASSIGN)) {

@@ -32,7 +32,7 @@ public class Format extends BatchFactoryHelper<String> {
 
   @Override
   public String Fun(String var, String body) {
-    return "function(" + var + ") {" + body + "}";
+    return "{function(" + var + ") " + body + "}";
   }
 
   @Override
@@ -48,6 +48,10 @@ public class Format extends BatchFactoryHelper<String> {
         String s = args.get(i);
         if (s == null)
           continue;
+        if (op == Op.SEQ && s.startsWith("{")) {
+          // strip { and } from s
+          s = s.substring(1, s.length() - 1);
+        }
         n++;
         if (n == 1)
           x = s;
@@ -58,11 +62,14 @@ public class Format extends BatchFactoryHelper<String> {
           x += s;
         }
       }
-      if (op != Op.SEQ)
+      if (op == Op.SEQ) {
+        x = "{" + x + "}";
+      } else {
         if (n == 1 && op.unary())
           x = "(" + op.getOpSymbol() + x + ")";
         else if (n > 1)
           x = "(" + x + ")";
+      }
       return x;
     }
   }
@@ -79,20 +86,24 @@ public class Format extends BatchFactoryHelper<String> {
 
   @Override
   public String Let(String var, String expression, String body) {
-    return "var " + var + "=" + expression + "; " + body;
+    if (body.startsWith("{")) {
+      // strip { and } from body
+      body = body.substring(1, body.length() - 1);
+    }
+    return "{var " + var + "=" + expression + "; " + body + "}";
   }
 
   @Override
   public String If(String condition, String thenExp, String elseExp) {
     if (elseExp.equals("skip"))
-      return "if (" + condition + ") {" + thenExp + "}";
+      return "{if (" + condition + ") " + thenExp + "}";
     else
-      return "if (" + condition + ") {" + thenExp + "} else {" + elseExp + "}";
+      return "{if (" + condition + ") " + thenExp + " else " + elseExp + "}";
   }
 
   @Override
   public String Loop(String var, String collection, String body) {
-    return "for (" + var + " in " + collection + ") {" + body + "}";
+    return "{for (" + var + " in " + collection + ") " + body + "}";
   }
 
   @Override
