@@ -74,7 +74,9 @@ public class TCPServer<E, T> implements Runnable {
       ForestReader data = transport.read(in);
       // System.out.print("Data: ");
       // System.out.println(data.toString());
-      ForestWriter response = transport.writer(new OutputStreamWriter(System.out));
+      ForestWriter response = transport.writer(
+        new OutputStreamWriter(connectionSocket.getOutputStream())
+      );
       handler.executeServer(exp, data, response);
       // TODO: supercompilation can combine the execute and write
       // phases!
