@@ -148,11 +148,11 @@ public class Parser<E> {
 
   E statement() {
     if (match(Symbol.FOR)) {
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String v = ID();
-      match(Symbol.IN);
+      require(Symbol.IN);
       E e = expr();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       E b = block();
       return f.Loop(v, e, b);
     } else if (match(Symbol.VAR)) {
@@ -261,7 +261,7 @@ public class Parser<E> {
     case LPAREN: {
       next();
       e = expr();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       return e;
     }
     case STRING: {
@@ -274,17 +274,17 @@ public class Parser<E> {
     }
     case FUNCTION: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String v = ID();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       e = block();
       return f.Fun(v, e);
     }
     case IF: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       E a = expr();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       E b = block();
       if (match(Symbol.ELSE)) {
         E c = block();
@@ -294,9 +294,9 @@ public class Parser<E> {
     }
     case DATE: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String str = String();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       return f.Data(java.sql.Date.valueOf(str));
     }
     case TRUE:
@@ -349,8 +349,8 @@ public class Parser<E> {
             e = expr();
             args.add(e);
           }
+          require(Symbol.RPAREN);
         }
-        match(Symbol.RPAREN);
         value = f.Call(value, field, args);
       } else
         value = f.Prop(value, field);
