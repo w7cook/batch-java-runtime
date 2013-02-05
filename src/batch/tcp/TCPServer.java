@@ -34,6 +34,7 @@ import java.net.Socket;
 import batch.Service;
 import batch.syntax.Parser;
 import batch.util.BatchTransport;
+import batch.util.ForestReader;
 import batch.util.ForestWriter;
 
 public class TCPServer<E, T> implements Runnable {
@@ -68,12 +69,13 @@ public class TCPServer<E, T> implements Runnable {
       String script = in.readLine();
       if (debug)
         System.out.println("Script: " + script);
+      in.readLine(); // Blank line before input
       E exp = Parser.parse(script, handler);
-      // Forest data = transport.readForest(in);
+      ForestReader data = transport.read(in);
       // System.out.print("Data: ");
       // System.out.println(data.toString());
       ForestWriter response = transport.writer(new OutputStreamWriter(System.out));
-      handler.executeServer(exp, null, response);
+      handler.executeServer(exp, data, response);
       // TODO: supercompilation can combine the execute and write
       // phases!
     } catch (IOException e) {

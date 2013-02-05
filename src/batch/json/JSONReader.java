@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonToken;
 
 import batch.DataType;
 import batch.util.ForestReader;
+import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
 /*
@@ -287,5 +288,10 @@ public class JSONReader extends TransportHelper implements ForestReader {
     } catch (IOException e) {
       throw new Error("JSON Reader error");
     }
+  }
+
+  @Override
+  public void copyTo(ForestWriter out) {
+    throw new Error("Not yet implemented");
   }
 }

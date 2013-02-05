@@ -26,7 +26,7 @@ public class Parser<E> {
         "||"), AND("&&"), EQ("=="), NE("!="), LE("<="), LT("<"), GT(">"), GE(
         ">="), SEMI(";"), COMMA(","), ASSIGN("="), LCURLY("{"), RCURLY("}"), LPAREN(
         "("), RPAREN(")"), ADD("+"), SUB("-"), MUL("*"), DIV("/"), DOT("."), NOT(
-        "!");
+        "!"), INPUT("INPUT");
 
     public final String text;
     public final int index;
@@ -318,12 +318,17 @@ public class Parser<E> {
 
   E prim() {
     if (match(Symbol.OUTPUT)) {
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String str = String();
-      match(Symbol.COMMA);
+      require(Symbol.COMMA);
       E e = expr();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       return f.Out(str, e);
+    } else if (match(Symbol.INPUT)) {
+      require(Symbol.LPAREN);
+      String str = String();
+      require(Symbol.RPAREN);
+      return f.In(str);
     } else {
       E value = f.Var(ID());
       return access(value);
