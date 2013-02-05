@@ -545,7 +545,8 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
 
       // always replicate loops
       public boolean NeedReplicate(History control) {
-        control.add(model.emptyStage());
+        //control.add(model.emptyStage());
+        control.add(new Stage(Place.MOBILE, factory.In(var)));
         return true;
       }
 
