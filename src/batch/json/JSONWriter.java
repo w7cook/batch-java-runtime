@@ -17,21 +17,24 @@ import batch.util.TransportHelper;
 public class JSONWriter extends TransportHelper implements ForestWriter {
 
   JsonGenerator json;
+  boolean startedObject;
 
   public JSONWriter(Writer out) throws IOException {
     out.write("Batch 1.0 JSON 1.0\n");
     json = new JsonFactory().createJsonGenerator(out);
-    json.writeStartObject();
   }
 
   public JSONWriter(JsonGenerator json) throws IOException {
     this.json = json;
-    json.writeStartObject();
   }
 
   public void put(String field, Object value) {
     DataType type = batch.DataType.fromJava(value);
     try {
+      if (!startedObject) {
+        json.writeStartObject();
+      }
+      startedObject = true;
       switch (type) {
       case Null:
         json.writeNullField(field);
@@ -65,21 +68,21 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
   class ListWriter implements ForestListWriter {
     JsonGenerator json;
     JSONWriter jsonWriter;
-    int count = 0;
 
     public ListWriter(JsonGenerator json, JSONWriter jsonWriter) {
       this.json = json;
       this.jsonWriter = jsonWriter;
+      jsonWriter.startedObject = false;
     }
 
     @Override
     public ForestWriter newIteration() {
       try {
-        if (count++ > 0) {
+        if (jsonWriter.startedObject) {
+          jsonWriter.startedObject = false;
           json.writeEndObject();
+          json.flush();
         }
-        json.writeStartObject();
-        json.flush();
         return jsonWriter;
       } catch (IOException e) {
         throw new Error("JSON WRITER ERROR!");
@@ -88,11 +91,13 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
 
     public void complete() {
       try {
-        if (count > 0) {
+        if (jsonWriter.startedObject) {
           json.writeEndObject();
         }
         json.writeEndArray();
         json.flush();
+        // Still in parent object
+        jsonWriter.startedObject = true;
       } catch (IOException e) {
         throw new Error("JSON WRITER ERROR!");
       }
@@ -113,6 +118,9 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
   @Override
   public void complete() {
     try {
+      if (!startedObject) {
+        json.writeStartObject();
+      }
       json.writeEndObject(); // for field 'name'
       json.writeRaw('\n');
       json.flush();

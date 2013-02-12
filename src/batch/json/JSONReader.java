@@ -214,15 +214,16 @@ public class JSONReader extends TransportHelper implements ForestReader {
       JsonParser jp;
       private boolean hasNext;
       JSONReader reader;
+      boolean peeked;
 
       public ReadIterator(JsonParser jp, JSONReader reader) {
         super();
         this.jp = jp;
         this.reader = reader;
-        peek();
       }
 
       private void peek() {
+        peeked = true;
         while (true)
           try {
             switch (jp.nextToken()) {
@@ -246,11 +247,15 @@ public class JSONReader extends TransportHelper implements ForestReader {
 
       @Override
       public boolean hasNext() {
+        if (!peeked) {
+          peek();
+        }
         return hasNext;
       }
 
       @Override
       public ForestReader next() {
+        peeked = false;
         return reader;
       }
 
