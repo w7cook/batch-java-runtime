@@ -377,13 +377,18 @@ public class Eval extends BatchFactoryHelper<Evaluate> {
 			public Object evaluate(Map<String, Object> env, ForestReader inputs,
 					ForestWriter results) {
 
+				final Object prevVal = env.get(var);
 				final Object val = expression.evaluate(env, inputs, results);
 
 				env.put(var, val);
 				try {
 					return body.evaluate(env, inputs, results);
 				} finally {
-					env.remove(var);
+					if (prevVal == null) {
+						env.remove(var);
+					} else {
+						env.put(var, prevVal);
+					}
 				}
 			}
 		};

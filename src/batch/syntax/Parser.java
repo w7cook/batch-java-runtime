@@ -26,7 +26,7 @@ public class Parser<E> {
         "||"), AND("&&"), EQ("=="), NE("!="), LE("<="), LT("<"), GT(">"), GE(
         ">="), SEMI(";"), COMMA(","), ASSIGN("="), LCURLY("{"), RCURLY("}"), LPAREN(
         "("), RPAREN(")"), ADD("+"), SUB("-"), MUL("*"), DIV("/"), DOT("."), NOT(
-        "!");
+        "!"), INPUT("INPUT");
 
     public final String text;
     public final int index;
@@ -148,12 +148,12 @@ public class Parser<E> {
 
   E statement() {
     if (match(Symbol.FOR)) {
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String v = ID();
-      match(Symbol.IN);
+      require(Symbol.IN);
       E e = expr();
-      match(Symbol.RPAREN);
-      E b = block();
+      require(Symbol.RPAREN);
+      E b = base();
       return f.Loop(v, e, b);
     } else if (match(Symbol.VAR)) {
       String v = ID();
@@ -261,8 +261,8 @@ public class Parser<E> {
     case LPAREN: {
       next();
       e = expr();
-      match(Symbol.RPAREN);
-      return e;
+      require(Symbol.RPAREN);
+      return access(e);
     }
     case STRING: {
       String str = (String) data;
@@ -274,29 +274,29 @@ public class Parser<E> {
     }
     case FUNCTION: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String v = ID();
-      match(Symbol.RPAREN);
-      e = block();
+      require(Symbol.RPAREN);
+      e = base();
       return f.Fun(v, e);
     }
     case IF: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       E a = expr();
-      match(Symbol.RPAREN);
-      E b = block();
+      require(Symbol.RPAREN);
+      E b = base();
       if (match(Symbol.ELSE)) {
-        E c = block();
+        E c = base();
         return f.If(a, b, c);
       }
       return f.If(a, b, f.Skip());
     }
     case DATE: {
       next();
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String str = String();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       return f.Data(java.sql.Date.valueOf(str));
     }
     case TRUE:
@@ -305,6 +305,8 @@ public class Parser<E> {
     case FALSE:
       next();
       return f.Data(false);
+    case LCURLY:
+      return access(block());
     default: {
       E a = prim();
       if (match(Symbol.ASSIGN)) {
@@ -318,12 +320,17 @@ public class Parser<E> {
 
   E prim() {
     if (match(Symbol.OUTPUT)) {
-      match(Symbol.LPAREN);
+      require(Symbol.LPAREN);
       String str = String();
-      match(Symbol.COMMA);
+      require(Symbol.COMMA);
       E e = expr();
-      match(Symbol.RPAREN);
+      require(Symbol.RPAREN);
       return f.Out(str, e);
+    } else if (match(Symbol.INPUT)) {
+      require(Symbol.LPAREN);
+      String str = String();
+      require(Symbol.RPAREN);
+      return f.In(str);
     } else {
       E value = f.Var(ID());
       return access(value);
@@ -344,8 +351,8 @@ public class Parser<E> {
             e = expr();
             args.add(e);
           }
+          require(Symbol.RPAREN);
         }
-        match(Symbol.RPAREN);
         value = f.Call(value, field, args);
       } else
         value = f.Prop(value, field);

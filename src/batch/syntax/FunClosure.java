@@ -29,7 +29,7 @@ public class FunClosure<E extends Evaluate> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("COSURE(");
+		sb.append("CLOSURE(");
 		sb.append(var);
 		sb.append(")");
 		return sb.toString();
