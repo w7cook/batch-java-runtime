@@ -17,6 +17,7 @@ public class Environment {
 	}
 
 	public History lookup(String name, Object info) {
+	  // allow undefined variables
 		return new History(model).add(new Stage(Place.LOCAL, CodeModel.factory
 				.Var(name).setExtra(info)));
 	}

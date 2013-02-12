@@ -498,8 +498,10 @@ public class CodeModel extends PartitionFactoryHelper<PExpr> {
         HistoryList hl = new HistoryList(model);
         for (PExpr e : args)
           hl.add(e.partition(Place.LOCAL, env));
-        if (hl.numHistories() == 0)
-          hl.add(env.lookup("*LOCAL*", null)); // TODO: what is this?
+        if (hl.numHistories() == 0) {
+          // create a blank stage for this computation
+          hl.add( new History(model).add(new Stage(Place.LOCAL, CodeModel.factory.Skip())));
+        }
         History result = hl.merge_outputs_at(Place.LOCAL, this);
         result.last().setPlace(Place.LOCAL);
         return result;
