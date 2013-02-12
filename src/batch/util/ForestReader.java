@@ -94,4 +94,6 @@ public interface ForestReader {
   Iterable<ForestReader> getTable(String variable);
 
   void complete();
+
+  void copyTo(ForestWriter out);
 }

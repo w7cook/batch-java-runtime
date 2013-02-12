@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonToken;
 
 import batch.DataType;
 import batch.util.ForestReader;
+import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
 /*
@@ -121,32 +122,32 @@ public class JSONReader extends TransportHelper implements ForestReader {
 
   @Override
   public int getByte(String field) {
-    return (Byte) get(field);
+    return ((Number) get(field)).byteValue();
   }
 
   @Override
   public short getShort(String field) {
-    return (Short) get(field);
+    return ((Number) get(field)).shortValue();
   }
 
   @Override
   public int getInteger(String field) {
-    return (Integer) get(field);
+    return ((Number) get(field)).intValue();
   }
 
   @Override
   public long getLong(String field) {
-    return (Long) get(field);
+    return ((Number) get(field)).longValue();
   }
 
   @Override
   public double getDouble(String field) {
-    return (Double) get(field);
+    return ((Number) get(field)).doubleValue();
   }
 
   @Override
   public float getFloat(String field) {
-    return (Float) get(field);
+    return ((Number) get(field)).floatValue();
   }
 
   @Override
@@ -287,5 +288,10 @@ public class JSONReader extends TransportHelper implements ForestReader {
     } catch (IOException e) {
       throw new Error("JSON Reader error");
     }
+  }
+
+  @Override
+  public void copyTo(ForestWriter out) {
+    throw new Error("Not yet implemented");
   }
 }

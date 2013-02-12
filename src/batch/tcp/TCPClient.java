@@ -65,6 +65,9 @@ public class TCPClient<I> extends Format implements Service<String, I> {
 			Writer out = new OutputStreamWriter(socket.getOutputStream());
 			out.write(exp);
 			out.write("\r\n");
+			out.write("\r\n");
+			data.copyTo(transport.writer(out));
+			out.write("\r\n");
 			out.flush();
 			Reader in = new InputStreamReader(socket.getInputStream());
 			return transport.read(in); // async read!!!
