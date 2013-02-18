@@ -10,7 +10,7 @@ import java.util.Map;
 // integer, double, decimal, date, time, datetime, string, blob
 
 
-public class Forest implements ForestReader, ForestWriter {
+public class Forest extends ForestReaderHelper implements ForestWriter {
 
   // instance variables
   private Map<String, Object> values;
@@ -53,123 +53,6 @@ public class Forest implements ForestReader, ForestWriter {
       throw (RuntimeException) val;
     else
       return val;
-  }
-
-  public int getByte(String variable) {
-    return ((java.lang.Number) get(variable)).byteValue();
-  }
-
-  public short getShort(String variable) {
-    return ((java.lang.Number) get(variable)).shortValue();
-  }
-
-  public int getInteger(String variable) {
-    return ((java.lang.Number) get(variable)).intValue();
-  }
-
-  public long getLong(String variable) {
-    return ((java.lang.Number) get(variable)).longValue();
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public double getDouble(String variable) {
-    return ((java.lang.Number) get(variable)).doubleValue();
-  }
-
-  public float getFloat(String variable) {
-    return ((java.lang.Number) get(variable)).floatValue();
-  }
-
-  public java.math.BigDecimal getBigDecimal(String variable) {
-    return (java.math.BigDecimal) get(variable);
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public String getString(String variable) {
-    Object val = get(variable);
-    if (val == null)
-      return null;
-    else
-      return val.toString();
-  }
-
-  public char getCharacter(String variable) {
-    return get(variable).toString().charAt(0);
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public boolean getBoolean(String variable) {
-    Object v = get(variable);
-    if (v instanceof java.lang.Boolean)
-      return (java.lang.Boolean) v;
-    if (v instanceof java.lang.Number)
-      return !((java.lang.Number) v).equals(0);
-    return java.lang.Boolean.getBoolean(v.toString());
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public java.sql.Date getDate(String variable) {
-    Object val = get(variable);
-    if (val instanceof java.sql.Date)
-      return (java.sql.Date) val;
-    else if (val instanceof java.sql.Timestamp)
-      return new java.sql.Date(((java.sql.Timestamp) val).getTime());
-    else
-      return java.sql.Date.valueOf(val.toString());
-  }
-
-  public java.util.Date getUtilDate(String variable) {
-    return (java.util.Date) get(variable);
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public java.sql.Time getTime(String variable) {
-    return (java.sql.Time) get(variable);
-  }
-
-  /**
-   * Retrieves the object value of the given variable name.
-   * 
-   * @param variable
-   *          the name of the variable
-   * @return the object value of the given variable name.
-   */
-  public java.sql.Timestamp getTimestamp(String variable) {
-    return (java.sql.Timestamp) get(variable);
-  }
-
-  public byte[] getRawData(String variable) {
-    return (byte[]) get(variable);
   }
 
   /**
