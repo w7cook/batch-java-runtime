@@ -30,6 +30,7 @@ import batch.util.TransportHelper;
 public class JSONReader extends ForestReaderHelper {
 
   JsonParser jp;
+  boolean inTable;
 
   public JSONReader(Reader in) throws IOException {
     BufferedReader buf = new BufferedReader(in);
@@ -41,6 +42,7 @@ public class JSONReader extends ForestReaderHelper {
     jsonFactory = new JsonFactory();
     jp = jsonFactory.createJsonParser(buf);
     check(JsonToken.START_OBJECT);
+    inTable = false;
   }
 
   private void check(JsonToken expected) {
@@ -124,11 +126,14 @@ public class JSONReader extends ForestReaderHelper {
   class ListReader implements Iterable<ForestReader> {
     JsonParser jp;
     JSONReader reader;
+    boolean wasInTable;
 
     public ListReader(JsonParser jp, JSONReader reader) {
       super();
       this.jp = jp;
       this.reader = reader;
+      this.wasInTable = reader.inTable;
+      reader.inTable = true;
     }
 
     @Override
@@ -159,6 +164,7 @@ public class JSONReader extends ForestReaderHelper {
               hasNext = true;
               return;
             case END_ARRAY:
+              reader.inTable = wasInTable;
               hasNext = false;
               return;
             default:
@@ -214,10 +220,12 @@ public class JSONReader extends ForestReaderHelper {
 
   @Override
   public void complete() {
-    try {
-      jp.close();
-    } catch (IOException e) {
-      throw new Error("JSON Reader error");
+    if (!inTable) {
+      try {
+        jp.close();
+      } catch (IOException e) {
+        throw new Error("JSON Reader error");
+      }
     }
   }
 
