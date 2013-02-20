@@ -215,7 +215,7 @@ public class JSONReader extends TransportHelper implements ForestReader {
       private boolean hasNext;
       JSONReader reader;
       boolean peeked;
-     
+
       public ReadIterator(JsonParser jp, JSONReader reader) {
         super();
         this.jp = jp;
