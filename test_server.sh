@@ -1,1 +1,1 @@
-java -classpath bin tcp.TestServer JSON 9825
+java -classpath bin:lib/jackson-core-asl-1.3.2.jar tcp.TestServer JSON 9825
