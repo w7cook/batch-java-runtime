@@ -20,7 +20,7 @@ import batch.util.TransportHelper;
 
 
  */
-public class XMLReader<E> extends TransportHelper {
+public class XMLReader<E> {
 
 	XMLInputFactory xmlFactory;
 	XMLStreamReader xml;
@@ -110,7 +110,7 @@ public class XMLReader<E> extends TransportHelper {
 						else
 							break;
 					}
-					Object value = loadData(type, text);
+					Object value = TransportHelper.loadData(type, text);
 					builder.putField(field, value);
 					// check(XMLStreamConstants.END_ELEMENT);
 					break;

@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonToken;
 
 import batch.DataType;
 import batch.util.ForestReader;
+import batch.util.ForestReaderHelper;
 import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
@@ -26,9 +27,10 @@ import batch.util.TransportHelper;
 
 
  */
-public class JSONReader extends TransportHelper implements ForestReader {
+public class JSONReader extends ForestReaderHelper {
 
   JsonParser jp;
+  boolean inTable;
 
   public JSONReader(Reader in) throws IOException {
     BufferedReader buf = new BufferedReader(in);
@@ -40,6 +42,7 @@ public class JSONReader extends TransportHelper implements ForestReader {
     jsonFactory = new JsonFactory();
     jp = jsonFactory.createJsonParser(buf);
     check(JsonToken.START_OBJECT);
+    inTable = false;
   }
 
   private void check(JsonToken expected) {
@@ -105,7 +108,7 @@ public class JSONReader extends TransportHelper implements ForestReader {
             check(JsonToken.VALUE_STRING);
             String data = jp.getText();
             check(JsonToken.END_OBJECT);
-            return loadData(type, data);
+            return TransportHelper.loadData(type, data);
           } else
             throw new Error("Unkonwn type: " + field);
         }
@@ -120,89 +123,17 @@ public class JSONReader extends TransportHelper implements ForestReader {
     }
   }
 
-  @Override
-  public int getByte(String field) {
-    return ((Number) get(field)).byteValue();
-  }
-
-  @Override
-  public short getShort(String field) {
-    return ((Number) get(field)).shortValue();
-  }
-
-  @Override
-  public int getInteger(String field) {
-    return ((Number) get(field)).intValue();
-  }
-
-  @Override
-  public long getLong(String field) {
-    return ((Number) get(field)).longValue();
-  }
-
-  @Override
-  public double getDouble(String field) {
-    return ((Number) get(field)).doubleValue();
-  }
-
-  @Override
-  public float getFloat(String field) {
-    return ((Number) get(field)).floatValue();
-  }
-
-  @Override
-  public BigDecimal getBigDecimal(String field) {
-    return (BigDecimal) get(field);
-  }
-
-  @Override
-  public String getString(String field) {
-    return get(field).toString();
-  }
-
-  @Override
-  public char getCharacter(String field) {
-    return (Character) get(field);
-  }
-
-  @Override
-  public boolean getBoolean(String field) {
-    return (Boolean) get(field);
-  }
-
-  @Override
-  public Date getDate(String field) {
-    return (Date) get(field);
-  }
-
-  @Override
-  public java.util.Date getUtilDate(String field) {
-    return (java.util.Date) get(field);
-  }
-
-  @Override
-  public Time getTime(String field) {
-    return (Time) get(field);
-  }
-
-  @Override
-  public Timestamp getTimestamp(String field) {
-    return (Timestamp) get(field);
-  }
-
-  @Override
-  public byte[] getRawData(String field) {
-    return (byte[]) get(field);
-  }
-
   class ListReader implements Iterable<ForestReader> {
     JsonParser jp;
     JSONReader reader;
+    boolean wasInTable;
 
     public ListReader(JsonParser jp, JSONReader reader) {
       super();
       this.jp = jp;
       this.reader = reader;
+      this.wasInTable = reader.inTable;
+      reader.inTable = true;
     }
 
     @Override
@@ -233,6 +164,7 @@ public class JSONReader extends TransportHelper implements ForestReader {
               hasNext = true;
               return;
             case END_ARRAY:
+              reader.inTable = wasInTable;
               hasNext = false;
               return;
             default:
@@ -287,10 +219,12 @@ public class JSONReader extends TransportHelper implements ForestReader {
 
   @Override
   public void complete() {
-    try {
-      jp.close();
-    } catch (IOException e) {
-      throw new Error("JSON Reader error");
+    if (!inTable) {
+      try {
+        jp.close();
+      } catch (IOException e) {
+        throw new Error("JSON Reader error");
+      }
     }
   }
 
