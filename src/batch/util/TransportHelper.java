@@ -7,9 +7,9 @@ import java.io.IOException;
 
 import batch.DataType;
 
-public abstract class TransportHelper {
+public class TransportHelper {
 
-	public String storeData(DataType type, Object value) throws IOException {
+	public static String storeData(DataType type, Object value) throws IOException {
 		if (type == DataType.Datetime && 
 				value instanceof java.util.Date) {
 			// make sure it formats correctly
@@ -21,14 +21,14 @@ public abstract class TransportHelper {
 		return String.valueOf(value);
 	}
 
-	protected Object loadData(String typeName, String data) throws IOException {
+	public static Object loadData(String typeName, String data) throws IOException {
 		DataType type = DataType.valueOf(typeName);
 		if (type == null)
 			throw new IOException("Unknown type " + type);
 		return loadData(type, data);
 	}
 
-	protected Object loadData(DataType type, String data) throws IOException {
+	public static Object loadData(DataType type, String data) throws IOException {
 		switch (type) {
 		case String:
 			return data;

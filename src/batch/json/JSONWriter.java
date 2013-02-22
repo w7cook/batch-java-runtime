@@ -14,7 +14,7 @@ import batch.util.ForestListWriter;
 import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
-public class JSONWriter extends TransportHelper implements ForestWriter {
+public class JSONWriter implements ForestWriter {
 
   JsonGenerator json;
   boolean startedObject;
@@ -56,7 +56,7 @@ public class JSONWriter extends TransportHelper implements ForestWriter {
         break;
       default:
         json.writeObjectFieldStart(field);
-        json.writeStringField("*" + type.toString(), storeData(type, value));
+        json.writeStringField("*" + type.toString(), TransportHelper.storeData(type, value));
         json.writeEndObject();
       }
       json.flush();

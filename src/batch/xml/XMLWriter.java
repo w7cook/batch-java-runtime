@@ -14,7 +14,7 @@ import batch.DataType;
 import batch.util.ForestWriter;
 import batch.util.TransportHelper;
 
-public class XMLWriter extends TransportHelper implements ForestWriter {
+public class XMLWriter implements ForestWriter {
 
 	XMLStreamWriter xml;
 	boolean explicitFields;
@@ -78,7 +78,7 @@ public class XMLWriter extends TransportHelper implements ForestWriter {
 			xml.writeStartElement(field);
 			DataType type = DataType.fromJava(v);
 			xml.writeAttribute("TYPE", type.toString());
-			String value = storeData(type, v);
+			String value = TransportHelper.storeData(type, v);
 			if (type != DataType.Null)
 				xml.writeCharacters(value);
 			xml.writeEndElement(); // for field 'name'
