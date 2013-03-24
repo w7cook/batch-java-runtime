@@ -107,6 +107,10 @@ public class JSONWriter implements ForestWriter {
   @Override
   public ForestListWriter newTable(String field) {
     try {
+      if (!startedObject) {
+        json.writeStartObject();
+        startedObject = true;
+      }
       json.writeArrayFieldStart(field);
       json.flush();
       return new ListWriter(json, this);
