@@ -18,6 +18,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 
 import batch.DataType;
+import batch.util.ForestListWriter;
 import batch.util.ForestReader;
 import batch.util.ForestReaderHelper;
 import batch.util.ForestWriter;
@@ -45,19 +46,26 @@ public class JSONReader extends ForestReaderHelper {
     inTable = false;
   }
 
-  private void check(JsonToken expected) {
+  private JsonToken nextToken() {
     JsonToken next;
     try {
       next = jp.nextToken();
+      return next;
     } catch (Exception e) {
       throw new Error("JSON Parser Error");
     }
-    if (next != expected)
-      throw new Error("EXPECTED " + expected.asString() + " FOUND "
-          + next.asString());
   }
 
-  public Object get(String request) {
+  private void mustEqual(JsonToken expected, JsonToken given) {
+    if (given != expected)
+      throw new Error("EXPECTED " + expected + " FOUND " + given);
+  }
+
+  private void check(JsonToken expected) {
+    mustEqual(expected, nextToken());
+  }
+
+  private void checkFieldName(String request) {
     check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
     // encountered as a field name (same lexical
     // value, different function)
@@ -66,7 +74,23 @@ public class JSONReader extends ForestReaderHelper {
       if (!field.equals(request))
         throw new Error("Mismatched field: " + request + " expected but found "
             + field);
-      JsonToken token = jp.nextToken();
+    } catch (JsonParseException e) {
+      throw new Error("JSON Parser Error");
+    } catch (IOException e) {
+      throw new Error("JSON Parser Error");
+    }
+  }
+
+  @Override
+  public Object get(String request) {
+    checkFieldName(request);
+    nextToken();
+    return get();
+  }
+
+  private Object get() {
+    try {
+      JsonToken token = jp.getCurrentToken();
       switch (token) {
       case VALUE_NULL: // VALUE_TRUE is returned when encountering literal
         // "true" in value context
@@ -101,7 +125,7 @@ public class JSONReader extends ForestReaderHelper {
         check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
         // encountered as a field name (same lexical
         // value, different function)
-        field = jp.getCurrentName();
+        String field = jp.getCurrentName();
         if (field.charAt(0) == '*') {
           DataType type = DataType.fromString(field.substring(1));
           if (type != null) {
@@ -199,22 +223,13 @@ public class JSONReader extends ForestReaderHelper {
 
   @Override
   public Iterable<ForestReader> getTable(String request) {
-    try {
-      check(JsonToken.FIELD_NAME); // FIELD_NAME is returned when a String token is
-      // encountered as a field name (same lexical
-      // value, different function)
-      String field;
-      field = jp.getCurrentName();
-      if (!field.equals(request))
-        throw new Error("Mismatched field: " + request + " expected but found "
-            + field);
-      check(JsonToken.START_ARRAY);
-      return new ListReader(jp, this);
-    } catch (JsonParseException e) {
-      throw new Error("JSON Reader error");
-    } catch (IOException e) {
-      throw new Error("JSON Reader error");
-    }
+    checkFieldName(request);
+    check(JsonToken.START_ARRAY);
+    return getTable();
+  }
+
+  private Iterable<ForestReader> getTable() {
+    return new ListReader(jp, this);
   }
 
   @Override
@@ -230,6 +245,27 @@ public class JSONReader extends ForestReaderHelper {
 
   @Override
   public void copyTo(ForestWriter out) {
-    throw new Error("Not yet implemented");
+    while (nextToken() != JsonToken.END_OBJECT) {
+      String field;
+      try {
+        mustEqual(JsonToken.FIELD_NAME, jp.getCurrentToken());
+        field = jp.getCurrentName();
+        jp.nextToken();
+      } catch (JsonParseException e) {
+        throw new Error("JSON Parser Error");
+      } catch (IOException e) {
+        throw new Error("JSON Parser Error");
+      }
+      if (jp.getCurrentToken() == JsonToken.START_ARRAY) {
+        ForestListWriter tableOut = out.newTable(field);
+        for (ForestReader in : getTable()) {
+          in.copyTo(tableOut.newIteration());
+        }
+        tableOut.complete();
+      } else {
+        out.put(field, get());
+      }
+    }
+    out.complete();
   }
 }
