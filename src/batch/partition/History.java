@@ -79,7 +79,8 @@ public class History implements java.lang.Iterable<Stage> {
 		String type = last().getType();
 		String sym = "g" + counter++;
 		last().makeOutput(model, sym, type);
-		add(new Stage(Place.MOBILE, CodeModel.factory.In(sym).setExtra(type)));
+		add(new Stage(Place.MOBILE, 
+      CodeModel.factory.In(sym).setExtra(DynamicCallInfo.TYPE_INFO_KEY,type)));
 	}
 
 	// delay a behavior until a stage where it can be executed // used for
