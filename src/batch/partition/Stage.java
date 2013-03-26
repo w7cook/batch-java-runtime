@@ -30,7 +30,8 @@ public class Stage {
 	}
 
 	public void makeOutput(CodeModel model, String sym, String type2) {
-		action = CodeModel.factory.Out(sym, action).setExtra(type2);
+		action = CodeModel.factory.Out(sym, action)
+      .setExtra(DynamicCallInfo.TYPE_INFO_KEY, type2);
 	}
 
 	public void setPlace(Place place) {

@@ -17,5 +17,5 @@ public interface PartitionFactory<E> extends BatchFactory<E> {
 
 	public E Mobile(String type, E exp);
 	
-	public E setExtra(E exp, Object extra);
+	public E setExtra(E exp, Object extraKey, Object extraInfo);
 }
