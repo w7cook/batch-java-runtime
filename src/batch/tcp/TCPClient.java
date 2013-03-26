@@ -55,7 +55,7 @@ public class TCPClient<I> extends Format implements Service<String, I> {
 
   @Override
   public void executeServer(String exp, ForestReader data, ForestWriter results) {
-    throw new Error("TCPClient should not be called in server mode");
+    execute(exp, data).copyTo(results);
   }
 
 

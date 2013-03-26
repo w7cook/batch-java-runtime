@@ -17,6 +17,7 @@ import batch.util.TransportHelper;
 public class JSONWriter implements ForestWriter {
 
   JsonGenerator json;
+  boolean inTable;
   boolean startedObject;
 
   public JSONWriter(Writer out) throws IOException {
@@ -68,11 +69,14 @@ public class JSONWriter implements ForestWriter {
   class ListWriter implements ForestListWriter {
     JsonGenerator json;
     JSONWriter jsonWriter;
+    boolean parentInTable;
 
     public ListWriter(JsonGenerator json, JSONWriter jsonWriter) {
       this.json = json;
       this.jsonWriter = jsonWriter;
       jsonWriter.startedObject = false;
+      parentInTable = jsonWriter.inTable;
+      jsonWriter.inTable = true;
     }
 
     @Override
@@ -98,6 +102,7 @@ public class JSONWriter implements ForestWriter {
         json.flush();
         // Still in parent object
         jsonWriter.startedObject = true;
+        jsonWriter.inTable = parentInTable;
       } catch (IOException e) {
         throw new Error("JSON WRITER ERROR!");
       }
@@ -107,6 +112,10 @@ public class JSONWriter implements ForestWriter {
   @Override
   public ForestListWriter newTable(String field) {
     try {
+      if (!startedObject) {
+        json.writeStartObject();
+        startedObject = true;
+      }
       json.writeArrayFieldStart(field);
       json.flush();
       return new ListWriter(json, this);
@@ -118,10 +127,14 @@ public class JSONWriter implements ForestWriter {
   @Override
   public void complete() {
     try {
-      if (!startedObject) {
+      if (!inTable && !startedObject) {
+        startedObject = true;
         json.writeStartObject();
       }
-      json.writeEndObject(); // for field 'name'
+      if (startedObject) {
+        json.writeEndObject();
+        startedObject = false;
+      }
       json.writeRaw('\n');
       json.flush();
     } catch (IOException e) {
